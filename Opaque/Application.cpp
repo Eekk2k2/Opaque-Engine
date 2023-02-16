@@ -118,7 +118,7 @@ void Application::InitializeWindow()
 
 void Application::InitializeCursor()
 {
-	SetCursor(GLFW_HAND_CURSOR);
+	SetCursor(GLFW_ARROW_CURSOR);
 }
 
 // ------------------------------ Update Functions ---
