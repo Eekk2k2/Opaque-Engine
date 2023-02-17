@@ -13,22 +13,16 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Source Files\Application">
-      <UniqueIdentifier>{58ea9567-fa95-4344-8ba7-4d44ca15232c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Application\Debug">
-      <UniqueIdentifier>{b35fd235-6135-4707-aecf-1c0821650557}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\Application\Debug\Debug.cpp">
-      <Filter>Source Files\Application\Debug</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Application\Application.cpp">
-      <Filter>Source Files\Application</Filter>
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Application\main.cpp">
-      <Filter>Source Files\Application</Filter>
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Application\Application.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -36,7 +30,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Application\Debug\Debug.h">
-      <Filter>Source Files\Application\Debug</Filter>
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
