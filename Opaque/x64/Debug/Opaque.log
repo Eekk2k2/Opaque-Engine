@@ -1,2 +1,6 @@
 ﻿  Application.cpp
+  Debug.cpp
+  main.cpp
+  Generating Code...
+  LINK : E:\Projects\.vulkan\Opaque\x64\Debug\Opaque.exe not found or not built by the last incremental link; performing full link
   Opaque.vcxproj -> E:\Projects\.vulkan\Opaque\x64\Debug\Opaque.exe
