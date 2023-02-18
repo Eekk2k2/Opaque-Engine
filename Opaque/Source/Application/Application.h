@@ -27,7 +27,7 @@ public:
 	/// </summary>
 	const uint32_t ApplcationHeight = 1080;
 
-	// ------------------------------ APPLICATION ---
+	// ------------------------------ Application Variables ---
 
 	/// <summary>
 	/// Each time the application name is needed this value will be referenced. This value is a constant.
@@ -52,8 +52,11 @@ public:
 	/// </summary>
 	void Run();
 private:
-
-	// ------------------------------ APPLICATION ---
+	// ------------------------------ Application Variables ---
+	
+	VkInstance instance;
+	
+	// ------------------------------ Application Functions ---
 
 	/// <summary>
 	/// Call this to initialize something. This will be called before start(); which you can use for events in game.
@@ -128,5 +131,12 @@ private:
 	void InitializeCursor();
 
 	// ------------------------------ Update Functions ---
+
+	// ------------------------------ Other Functions ---
+
+	/// <summary>
+	/// This function creats a Vulkan instance and configures it.
+	/// </summary>
+	void CreateInstance();
 };
 

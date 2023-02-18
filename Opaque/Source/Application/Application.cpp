@@ -98,7 +98,6 @@ void Application::SetCursor(const char* CursorImagePath, int xhot, int yhot)
 	std::cout << "Application::SetCursor(const char* CursorImagePath, int xhot, int yhot) Line: " << __LINE__ << std::endl; // TODO : Find out why glfwImageRead() doesnt work / exist
 }
 
-
 // ------------------------------ Initialization Functions ---
 
 void Application::InitializeVulkan()
@@ -122,3 +121,21 @@ void Application::InitializeCursor()
 }
 
 // ------------------------------ Update Functions ---
+
+// ------------------------------ Other Functions ---
+
+void Application::CreateInstance()
+{
+	VkApplicationInfo VulkanApplicationInfo{};
+
+	VulkanApplicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+	VulkanApplicationInfo.pApplicationName = ApplicationName;
+	VulkanApplicationInfo.pEngineName = "Opaque";
+
+	VkInstanceCreateInfo CreateVulkanApplicationInfo{};
+	CreateVulkanApplicationInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+	CreateVulkanApplicationInfo.pApplicationInfo = &VulkanApplicationInfo;
+
+	uint32_t GLFWExtensionsCount = 0;
+	const char** GLFWExtensions;
+}
