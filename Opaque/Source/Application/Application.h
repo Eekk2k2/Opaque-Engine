@@ -41,16 +41,16 @@ public:
 
 	GLFWcursor* ApplicationCursor;
 
-
 	/// <summary>
 	/// This is the debug client of thi application. 
 	/// </summary>
-	//Debug debug = Debug(); TODO : Fix debugging systems
+	Debug debug = Debug();
 
 	/// <summary>
 	/// Function to get the whole thing going. Call this in main.cpp to start the program.
 	/// </summary>
 	void Run();
+
 private:
 
 	// ------------------------------ APPLICATION ---
