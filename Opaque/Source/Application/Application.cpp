@@ -138,4 +138,13 @@ void Application::CreateInstance()
 
 	uint32_t GLFWExtensionsCount = 0;
 	const char** GLFWExtensions;
+
+	GLFWExtensions = glfwGetRequiredInstanceExtensions(&GLFWExtensionsCount);
+
+	CreateVulkanApplicationInfo.enabledExtensionCount = GLFWExtensionsCount;
+	CreateVulkanApplicationInfo.ppEnabledExtensionNames = GLFWExtensions;
+	CreateVulkanApplicationInfo.enabledLayerCount = 0;
+
+	if (vkCreateInstance(&CreateVulkanApplicationInfo, nullptr, &VulkanInstance) != VK_SUCCESS) 
+		throw std::runtime_error("Failed to create a Vulkan Instance!"); /* TODO: debug.log(); */
 }

@@ -54,7 +54,7 @@ public:
 private:
 	// ------------------------------ Application Variables ---
 	
-	VkInstance instance;
+	VkInstance VulkanInstance;
 	
 	// ------------------------------ Application Functions ---
 
