@@ -122,7 +122,7 @@ private:
 	/// Set the cursor using a GLFW image.
 	/// </summary>
 	void SetCursor(GLFWimage* CursorImage);
-	
+
 	/// <summary>
 	/// Set the cursor using a GLFW image and set where the click events gets called from using xhot and yhot.
 	/// </summary>

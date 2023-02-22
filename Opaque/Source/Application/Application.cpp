@@ -27,7 +27,7 @@ void Application::Run()
 
 void Application::Initialize()
 {
-	InitializeWindow(); 
+	InitializeWindow();
 	InitializeCursor();
 	//InitializeIcon(); TODO : Implement
 
@@ -113,7 +113,7 @@ void Application::InitializeWindow()
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Since we are using Vulkan we need to tell GLFW
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // Disables resizing. Change this if you want. The callback is FramebufferResizeCallback(GLFWwindow* window, int width, int height);
-	
+
 	ApplicationWindow = glfwCreateWindow(ApplcationWidth, ApplcationHeight, ApplicationName, nullptr, nullptr); // Sets the ApplicationWindow variable. TODO : When the camera gets implements errors are going to happen here
 }
 
