@@ -1,3 +1,8 @@
+#pragma once
+
+#include <iostream>
+#include <optional>
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
@@ -6,11 +11,9 @@
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 
-#include <iostream>
-
 #include "Debug/Debug.h"
 
-#pragma once
+
 class Application
 {
 public:
@@ -27,7 +30,7 @@ public:
 	/// </summary>
 	const uint32_t ApplcationHeight = 1080;
 
-	// ------------------------------ Application Variables ---
+	// ------------------------------ Application ---
 
 	/// <summary>
 	/// Each time the application name is needed this value will be referenced. This value is a constant.
@@ -41,22 +44,44 @@ public:
 
 	GLFWcursor* ApplicationCursor;
 
-
 	/// <summary>
 	/// This is the debug client of thi application. 
 	/// </summary>
-	//Debug debug = Debug(); TODO : Fix debugging systems
+	Debug debug = Debug();
 
 	/// <summary>
 	/// Function to get the whole thing going. Call this in main.cpp to start the program.
 	/// </summary>
 	void Run();
+
 private:
-	// ------------------------------ Application Variables ---
-	
+
+	// ------------------------------ Application ---
+
 	VkInstance VulkanInstance;
-	
-	// ------------------------------ Application Functions ---
+
+	/// <summary>
+	/// Vector over the validation layers for the vulkan instance
+	/// </summary>
+	/// <param name="LogMessage"></param>
+	/// <param name="TYPE"></param>
+	const std::vector<const char*> ValidationLayers =
+	{
+		"VK_LAYER_KHRONOS_validation"
+	};
+
+
+#ifdef NDEBUG
+	/// <summary>
+	/// Wether to enable validation layers or not. This value automatically changes based on build type(DEBUG and RELEASE)
+	/// </summary>
+	const bool EnableValidationLayers = false;
+#else
+	/// <summary>
+	/// Wether to enable validation layers or not. This value automatically changes based on build type(DEBUG and RELEASE)
+	/// </summary>
+	const bool EnableValidationLayers = true;
+#endif
 
 	/// <summary>
 	/// Call this to initialize something. This will be called before start(); which you can use for events in game.
@@ -97,7 +122,7 @@ private:
 	/// Set the cursor using a GLFW image.
 	/// </summary>
 	void SetCursor(GLFWimage* CursorImage);
-	
+
 	/// <summary>
 	/// Set the cursor using a GLFW image and set where the click events gets called from using xhot and yhot.
 	/// </summary>
@@ -130,13 +155,38 @@ private:
 	/// </summary>
 	void InitializeCursor();
 
-	// ------------------------------ Update Functions ---
+	// ------------------------------ Vulkan ---
 
-	// ------------------------------ Other Functions ---
+	/// <summary>
+	/// I dont know what this is TODO : Find out
+	/// </summary>
+	struct VulkanQueueFamilyIndices
+	{
+		std::optional<uint32_t> GraphicsFamily;
+	};
 
 	/// <summary>
 	/// This function creats a Vulkan instance and configures it.
 	/// </summary>
-	void CreateInstance();
-};
+	void CreateVulkanInstance();
 
+	/// <summary>
+	/// This function chooses which device to use. 
+	/// </summary>
+	void VulkanPickPhysicalInstance();
+
+	/// <summary>
+	/// Checks for validation layer support. Used for debugging.
+	/// </summary>
+	/// <returns></returns>
+	bool CheckValidationLayerSupport();
+
+	/// <summary>
+	/// bool which checks if a device is compatible with some features.
+	/// </summary>
+	/// <param name="_Device"></param>
+	/// <returns></returns>
+	bool isDeviceSuitable(VkPhysicalDevice _Device); // TODO : !IMPORTANT! https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Physical_devices_and_queue_families - rateDeviceSustainability();, let the user choose or pick the first device and let the user change afterwards.
+
+	VulkanQueueFamilyIndices VulkanFindQueueFamilies(VkPhysicalDevice _Device);
+};

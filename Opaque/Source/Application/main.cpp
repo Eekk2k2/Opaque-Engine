@@ -1,8 +1,10 @@
-#include "Application.h"
-
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
+#include <cstring>
+
+#include "Application.h"
+
 
 int main()
 {
