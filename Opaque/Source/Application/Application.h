@@ -158,7 +158,7 @@ private:
 	// ------------------------------ Vulkan ---
 
 	/// <summary>
-	/// I dont know what this is TODO : Find out
+	/// I dont know what this is TODO : Find out eventually
 	/// </summary>
 	struct VulkanQueueFamilyIndices
 	{
