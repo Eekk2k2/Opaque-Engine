@@ -187,17 +187,6 @@ bool Application::CheckValidationLayerSupport()
 	return true;
 }
 
-bool Application::isDeviceSuitable(VkPhysicalDevice _Device)
-{
-	VkPhysicalDeviceProperties _DeviceProperties;
-	VkPhysicalDeviceFeatures _DeviceFeatures;
-
-	vkGetPhysicalDeviceProperties(_Device, &_DeviceProperties);
-	vkGetPhysicalDeviceFeatures(_Device, &_DeviceFeatures);
-
-	return true;
-}
-
 void Application::VulkanPickPhysicalInstance()
 {
 	VkPhysicalDevice VulkanPhysicalDevice = VK_NULL_HANDLE;
@@ -217,6 +206,13 @@ void Application::VulkanPickPhysicalInstance()
 	}
 }
 
+bool Application::isDeviceSuitable(VkPhysicalDevice _Device)
+{
+	Application::VulkanQueueFamilyIndices QueueIndices = VulkanFindQueueFamilies(_Device);
+
+	return QueueIndices.GraphicsFamily.has_value();
+}
+
 Application::VulkanQueueFamilyIndices Application::VulkanFindQueueFamilies(VkPhysicalDevice _Device)
 {
 	VulkanQueueFamilyIndices QueueIndices;
@@ -226,6 +222,16 @@ Application::VulkanQueueFamilyIndices Application::VulkanFindQueueFamilies(VkPhy
 
 	std::vector<VkQueueFamilyProperties> QueueFamilies(QueueFamilyCount);
 	vkGetPhysicalDeviceQueueFamilyProperties(_Device, &QueueFamilyCount, QueueFamilies.data());
+	
+	int i = 0;
+	for (const auto& QueueFamily : QueueFamilies)
+	{
+		if (QueueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			QueueIndices.GraphicsFamily = i;
+		}
+		i++;
+	}
 
 	return QueueIndices;
 }
