@@ -63,15 +63,17 @@ private:
 	/// </summary>
 	VkInstance VulkanInstance;
 
-	/// <summary>
-	/// The logical device of this application. Created in Application::VulkanCreateLogicalDevice();
-	/// </summary>
-	VkDevice VulkanDevice;
+	VkSurfaceKHR VulkanSurface;
 
 	/// <summary>
 	/// This value represents the selected physical device in the Vulkan graphics API 
 	/// </summary>
 	VkPhysicalDevice VulkanPhysicalDevice = VK_NULL_HANDLE;
+
+	/// <summary>
+	/// The logical device of this application. Created in Application::VulkanCreateLogicalDevice();
+	/// </summary>
+	VkDevice VulkanDevice;
 
 	VkQueue GraphicsQueue;
 	
@@ -196,6 +198,8 @@ private:
 	void VulkanPickPhysicalDevice();
 
 	void VulkanCreateLogicalDevice();
+
+	void VulkanCreateSurface();
 
 	/// <summary>
 	/// Checks for validation layer support. Used for debugging.

@@ -108,6 +108,7 @@ void Application::InitializeVulkan()
 {
 	CreateVulkanInstance();
 	// SetupDebugMessenger(); TODO
+	VulkanCreateSurface();
 	VulkanPickPhysicalDevice();
 	VulkanCreateLogicalDevice();
 }
@@ -164,33 +165,6 @@ void Application::CreateVulkanInstance()
 		throw std::runtime_error("Failed to create a Vulkan Instance!"); /* TODO: debug.log(); */
 }
 
-bool Application::CheckValidationLayerSupport()
-{
-	uint32_t VulkanValidationLayerCount = 0;
-	vkEnumerateInstanceLayerProperties(&VulkanValidationLayerCount, nullptr);
-
-	std::vector<VkLayerProperties> AvailableVulkanValidationLayers(VulkanValidationLayerCount);
-	vkEnumerateInstanceLayerProperties(&VulkanValidationLayerCount, AvailableVulkanValidationLayers.data());
-
-	for (const char* VulkanValidationLayerName : ValidationLayers)
-	{
-		bool VulkanValidationLayerFound = false;
-
-		for (const auto& VulkanValidationLayersProperties : AvailableVulkanValidationLayers)
-		{
-			if (strcmp(VulkanValidationLayerName, VulkanValidationLayersProperties.layerName) == 0)
-			{
-				VulkanValidationLayerFound = true;
-				break;
-			}
-		}
-
-		if (!VulkanValidationLayerFound) { return false; }
-	}
-
-	return true;
-}
-
 void Application::VulkanPickPhysicalDevice()
 {
 	uint32_t DeviceCount = 0;
@@ -245,6 +219,38 @@ void Application::VulkanCreateLogicalDevice()
 		throw std::runtime_error("Failed to create logical device.");
 
 	vkGetDeviceQueue(VulkanDevice, QueueIndices.GraphicsFamily.value(), 0, &GraphicsQueue);
+}
+
+void Application::VulkanCreateSurface()
+{
+
+}
+
+bool Application::CheckValidationLayerSupport()
+{
+	uint32_t VulkanValidationLayerCount = 0;
+	vkEnumerateInstanceLayerProperties(&VulkanValidationLayerCount, nullptr);
+
+	std::vector<VkLayerProperties> AvailableVulkanValidationLayers(VulkanValidationLayerCount);
+	vkEnumerateInstanceLayerProperties(&VulkanValidationLayerCount, AvailableVulkanValidationLayers.data());
+
+	for (const char* VulkanValidationLayerName : ValidationLayers)
+	{
+		bool VulkanValidationLayerFound = false;
+
+		for (const auto& VulkanValidationLayersProperties : AvailableVulkanValidationLayers)
+		{
+			if (strcmp(VulkanValidationLayerName, VulkanValidationLayersProperties.layerName) == 0)
+			{
+				VulkanValidationLayerFound = true;
+				break;
+			}
+		}
+
+		if (!VulkanValidationLayerFound) { return false; }
+	}
+
+	return true;
 }
 
 bool Application::isDeviceSuitable(VkPhysicalDevice _Device)
