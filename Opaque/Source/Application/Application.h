@@ -58,8 +58,23 @@ private:
 
 	// ------------------------------ Application ---
 
+	/// <summary>
+	/// The vulkan instance of this application. Created in Application::CreateVulkanInstance();
+	/// </summary>
 	VkInstance VulkanInstance;
 
+	/// <summary>
+	/// The logical device of this application. Created in Application::VulkanCreateLogicalDevice();
+	/// </summary>
+	VkDevice VulkanDevice;
+
+	/// <summary>
+	/// This value represents the selected physical device in the Vulkan graphics API 
+	/// </summary>
+	VkPhysicalDevice VulkanPhysicalDevice = VK_NULL_HANDLE;
+
+	VkQueue GraphicsQueue;
+	
 	/// <summary>
 	/// Vector over the validation layers for the vulkan instance
 	/// </summary>
@@ -163,6 +178,11 @@ private:
 	struct VulkanQueueFamilyIndices
 	{
 		std::optional<uint32_t> GraphicsFamily;
+
+		bool isComplete()
+		{
+			return GraphicsFamily.has_value();
+		}
 	};
 
 	/// <summary>
@@ -173,7 +193,9 @@ private:
 	/// <summary>
 	/// This function chooses which device to use. 
 	/// </summary>
-	void VulkanPickPhysicalInstance();
+	void VulkanPickPhysicalDevice();
+
+	void VulkanCreateLogicalDevice();
 
 	/// <summary>
 	/// Checks for validation layer support. Used for debugging.

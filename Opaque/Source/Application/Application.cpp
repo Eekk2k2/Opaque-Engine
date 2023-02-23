@@ -49,6 +49,10 @@ void Application::Update()
 
 void Application::Cleanup()
 {
+	// Vulkan
+	vkDestroyDevice(VulkanDevice, nullptr);
+
+	// GLFW
 	glfwDestroyCursor(ApplicationCursor);
 	glfwDestroyWindow(ApplicationWindow);
 
@@ -104,7 +108,8 @@ void Application::InitializeVulkan()
 {
 	CreateVulkanInstance();
 	// SetupDebugMessenger(); TODO
-	// VulkanPickpPhysicalDevice();
+	VulkanPickPhysicalDevice();
+	VulkanCreateLogicalDevice();
 }
 
 void Application::InitializeWindow()
@@ -154,8 +159,8 @@ void Application::CreateVulkanInstance()
 		CreateVulkanApplicationInfo.ppEnabledLayerNames = ValidationLayers.data();
 	} else { CreateVulkanApplicationInfo.enabledLayerCount = 0; }
 
-
-	if (vkCreateInstance(&CreateVulkanApplicationInfo, nullptr, &VulkanInstance) != VK_SUCCESS) 
+	// Now we create the instance
+	if (vkCreateInstance(&CreateVulkanApplicationInfo, nullptr, &VulkanInstance) != VK_SUCCESS)
 		throw std::runtime_error("Failed to create a Vulkan Instance!"); /* TODO: debug.log(); */
 }
 
@@ -186,30 +191,69 @@ bool Application::CheckValidationLayerSupport()
 	return true;
 }
 
-void Application::VulkanPickPhysicalInstance()
+void Application::VulkanPickPhysicalDevice()
 {
-	VkPhysicalDevice VulkanPhysicalDevice = VK_NULL_HANDLE;
-
 	uint32_t DeviceCount = 0;
 	vkEnumeratePhysicalDevices(VulkanInstance, &DeviceCount, nullptr);
-	if (!DeviceCount) { throw std::runtime_error("Either failed to find or no GPUs with Vulkan support."); }
+	if (DeviceCount == 0) { throw std::runtime_error("Either failed to find or no GPUs with Vulkan support. || LINE : " + __LINE__);
+	}
 
 	std::vector<VkPhysicalDevice> Devices(DeviceCount);
 	vkEnumeratePhysicalDevices(VulkanInstance, &DeviceCount, Devices.data());
-
 
 	for (const auto& Device : Devices)
 	{
 		if (isDeviceSuitable(Device)) { VulkanPhysicalDevice = Device; break; }
 		else { throw std::runtime_error("Failed to find a suitable GPU."); }
 	}
+
+	if (VulkanPhysicalDevice == VK_NULL_HANDLE) { throw std::runtime_error("Failed to find a suitable GPU || LINE : " + __LINE__); }
+}
+
+void Application::VulkanCreateLogicalDevice()
+{
+	VulkanQueueFamilyIndices QueueIndices = VulkanFindQueueFamilies(VulkanPhysicalDevice);
+
+	VkDeviceQueueCreateInfo QueueCreateInfo{};
+	QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	QueueCreateInfo.queueFamilyIndex = QueueIndices.GraphicsFamily.value();
+	QueueCreateInfo.queueCount = 1;
+
+	float QueuePriority = 1.0f; // Range between 0.0 and 1.0
+	QueueCreateInfo.pQueuePriorities = &QueuePriority;
+	
+	VkPhysicalDeviceFeatures DeviceFeatures{};
+
+	VkDeviceCreateInfo DeviceCreateInfo{};
+	DeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	DeviceCreateInfo.pQueueCreateInfos = &QueueCreateInfo;
+	DeviceCreateInfo.queueCreateInfoCount = 1;
+
+	DeviceCreateInfo.pEnabledFeatures = &DeviceFeatures;
+	
+	DeviceCreateInfo.enabledExtensionCount = 0;
+
+	if (EnableValidationLayers)
+	{
+		DeviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(ValidationLayers.size());
+		DeviceCreateInfo.ppEnabledLayerNames = ValidationLayers.data();
+	}
+	else { DeviceCreateInfo.enabledLayerCount = 0; }
+
+	// Now we create the device
+	if (vkCreateDevice(VulkanPhysicalDevice, &DeviceCreateInfo, nullptr, &VulkanDevice) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create logical device.");
+
+	vkGetDeviceQueue(VulkanDevice, QueueIndices.GraphicsFamily.value(), 0, &GraphicsQueue);
 }
 
 bool Application::isDeviceSuitable(VkPhysicalDevice _Device)
 {
 	Application::VulkanQueueFamilyIndices QueueIndices = VulkanFindQueueFamilies(_Device);
 
-	return QueueIndices.GraphicsFamily.has_value();
+	// ... more checks
+
+	return QueueIndices.isComplete();
 }
 
 Application::VulkanQueueFamilyIndices Application::VulkanFindQueueFamilies(VkPhysicalDevice _Device)
@@ -229,6 +273,9 @@ Application::VulkanQueueFamilyIndices Application::VulkanFindQueueFamilies(VkPhy
 		{
 			QueueIndices.GraphicsFamily = i;
 		}
+
+		if (QueueIndices.isComplete()) { break; }
+
 		i++;
 	}
 
