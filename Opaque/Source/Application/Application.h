@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <optional>
+#include <set>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -76,7 +77,9 @@ private:
 	VkDevice VulkanDevice;
 
 	VkQueue GraphicsQueue;
-	
+
+	VkQueue PresentQueue;
+
 	/// <summary>
 	/// Vector over the validation layers for the vulkan instance
 	/// </summary>
@@ -175,16 +178,34 @@ private:
 	// ------------------------------ Vulkan ---
 
 	/// <summary>
-	/// I dont know what this is TODO : Find out eventually
+	/// I know what this is but not how to explain it TODO : Find out eventually
 	/// </summary>
 	struct VulkanQueueFamilyIndices
 	{
 		std::optional<uint32_t> GraphicsFamily;
+		std::optional<uint32_t> PresentFamily;
 
 		bool isComplete()
 		{
-			return GraphicsFamily.has_value();
+			return GraphicsFamily.has_value() && PresentFamily.has_value();
 		}
+	};
+
+	/// <summary>
+	/// Checking for Swap Chain support isnt good enough, we need to check the more specific details and that is what this struct is for.
+	/// </summary>
+	struct SwapChainSupportDetails
+	{
+		VkSurfaceCapabilitiesKHR Capabilities;
+		std::vector<VkSurfaceFormatKHR> Formats;
+		std::vector<VkPresentModeKHR> PresentModes;
+	};
+
+	/// <summary>
+	/// I know what this is but not how to explain it TODO : Find out eventually
+	/// </summary>
+	const std::vector<const char*> DeviceExtensions = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
 
 	/// <summary>
@@ -208,6 +229,13 @@ private:
 	bool CheckValidationLayerSupport();
 
 	/// <summary>
+	/// This bool checks the input device if it has some extensions we are going to need. 
+	/// </summary>
+	/// <param name="_Device"></param>
+	/// <returns></returns>
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice _Device);
+
+	/// <summary>
 	/// bool which checks if a device is compatible with some features.
 	/// </summary>
 	/// <param name="_Device"></param>
@@ -215,5 +243,17 @@ private:
 	bool isDeviceSuitable(VkPhysicalDevice _Device); // TODO : !IMPORTANT! https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Physical_devices_and_queue_families - rateDeviceSustainability();, let the user choose or pick the first device and let the user change afterwards.
 
 	VulkanQueueFamilyIndices VulkanFindQueueFamilies(VkPhysicalDevice _Device);
+
+	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice _Device);
 };
 
+// HERE YOU WILL SEE FUTURE TODOS WHICH I CANT PLACE ANYWHERE ELSE
+
+/*  - PERFORMANCE -
+	Note that it's very likely that these end up being the same queue family 
+	after all, but throughout the program we will treat them as if they were 
+	separate queues for a uniform approach. Nevertheless, you could add logic
+	to explicitly prefer a physical device that supports drawing and 
+	presentation in the same queue for improved performance.
+	https://vulkan-tutorial.com/en/Drawing_a_triangle/Presentation/Window_surface
+*/

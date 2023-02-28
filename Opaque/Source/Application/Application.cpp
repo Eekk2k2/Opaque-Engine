@@ -51,6 +51,8 @@ void Application::Cleanup()
 {
 	// Vulkan
 	vkDestroyDevice(VulkanDevice, nullptr);
+	vkDestroySurfaceKHR(VulkanInstance, VulkanSurface, nullptr);
+	vkDestroyInstance(VulkanInstance, nullptr);
 
 	// GLFW
 	glfwDestroyCursor(ApplicationCursor);
@@ -188,24 +190,32 @@ void Application::VulkanCreateLogicalDevice()
 {
 	VulkanQueueFamilyIndices QueueIndices = VulkanFindQueueFamilies(VulkanPhysicalDevice);
 
-	VkDeviceQueueCreateInfo QueueCreateInfo{};
-	QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	QueueCreateInfo.queueFamilyIndex = QueueIndices.GraphicsFamily.value();
-	QueueCreateInfo.queueCount = 1;
+	std::vector<VkDeviceQueueCreateInfo> QueueCreateInfos;
+	std::set<uint32_t> UniqueQueueFamilies = { 
+		QueueIndices.GraphicsFamily.value(), 
+		QueueIndices.PresentFamily.value() 
+	};
 
 	float QueuePriority = 1.0f; // Range between 0.0 and 1.0
-	QueueCreateInfo.pQueuePriorities = &QueuePriority;
+	for (uint32_t QueueFamily : UniqueQueueFamilies)
+	{
+		VkDeviceQueueCreateInfo QueueCreateInfo{};
+		QueueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		QueueCreateInfo.queueFamilyIndex = QueueFamily;
+		QueueCreateInfo.queueCount = 1;
+		QueueCreateInfo.pQueuePriorities = &QueuePriority;
+		QueueCreateInfos.push_back(QueueCreateInfo);
+	}
 	
 	VkPhysicalDeviceFeatures DeviceFeatures{};
 
 	VkDeviceCreateInfo DeviceCreateInfo{};
 	DeviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	DeviceCreateInfo.pQueueCreateInfos = &QueueCreateInfo;
-	DeviceCreateInfo.queueCreateInfoCount = 1;
-
+	DeviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(QueueCreateInfos.size());
+	DeviceCreateInfo.pQueueCreateInfos = QueueCreateInfos.data();
 	DeviceCreateInfo.pEnabledFeatures = &DeviceFeatures;
-	
-	DeviceCreateInfo.enabledExtensionCount = 0;
+	DeviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(DeviceExtensions.size());
+	DeviceCreateInfo.ppEnabledExtensionNames = DeviceExtensions.data();
 
 	if (EnableValidationLayers)
 	{
@@ -216,14 +226,17 @@ void Application::VulkanCreateLogicalDevice()
 
 	// Now we create the device
 	if (vkCreateDevice(VulkanPhysicalDevice, &DeviceCreateInfo, nullptr, &VulkanDevice) != VK_SUCCESS)
-		throw std::runtime_error("Failed to create logical device.");
+		throw std::runtime_error("Failed to create logical device. || LINE : " + __LINE__);
 
 	vkGetDeviceQueue(VulkanDevice, QueueIndices.GraphicsFamily.value(), 0, &GraphicsQueue);
+	vkGetDeviceQueue(VulkanDevice, QueueIndices.PresentFamily.value(), 0, &PresentQueue);
 }
 
 void Application::VulkanCreateSurface()
 {
-
+	// Gives data to the VkSurfaceKHR Aplication::VulkanSurface;
+	if (glfwCreateWindowSurface(VulkanInstance, ApplicationWindow, nullptr, &VulkanSurface) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create a window surface. || LINE : " + __LINE__);
 }
 
 bool Application::CheckValidationLayerSupport()
@@ -253,13 +266,34 @@ bool Application::CheckValidationLayerSupport()
 	return true;
 }
 
+bool Application::CheckDeviceExtensionSupport(VkPhysicalDevice _Device)
+{
+	uint32_t ExtensionsCount;
+	vkEnumerateDeviceExtensionProperties(_Device, nullptr, &ExtensionsCount, nullptr);
+
+	std::vector<VkExtensionProperties> AvailableExtensions(ExtensionsCount);
+	vkEnumerateDeviceExtensionProperties(_Device, nullptr, &ExtensionsCount, AvailableExtensions.data());
+
+	std::set<std::string> RequiredExtensions(DeviceExtensions.begin(), DeviceExtensions.end());
+
+	for (const auto& Extension : AvailableExtensions) { RequiredExtensions.erase(Extension.extensionName); }
+
+	return RequiredExtensions.empty();
+}
+
 bool Application::isDeviceSuitable(VkPhysicalDevice _Device)
 {
 	Application::VulkanQueueFamilyIndices QueueIndices = VulkanFindQueueFamilies(_Device);
-
+	bool ExtensionsSupported = CheckDeviceExtensionSupport(_Device);
+	bool SwapChainAdequate = false;
+	if (ExtensionsSupported)
+	{
+		SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(_Device);
+		SwapChainAdequate = !SwapChainSupport.Formats.empty() && !SwapChainSupport.PresentModes.empty();
+	}
 	// ... more checks
 
-	return QueueIndices.isComplete();
+	return QueueIndices.isComplete() && ExtensionsSupported && !SwapChainAdequate; // NEXT STEP (TODO) : "Choosing the right settings for the swap chain" https://vulkan-tutorial.com/en/Drawing_a_triangle/Presentation/Swap_chain
 }
 
 Application::VulkanQueueFamilyIndices Application::VulkanFindQueueFamilies(VkPhysicalDevice _Device)
@@ -275,10 +309,12 @@ Application::VulkanQueueFamilyIndices Application::VulkanFindQueueFamilies(VkPhy
 	int i = 0;
 	for (const auto& QueueFamily : QueueFamilies)
 	{
-		if (QueueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
-		{
-			QueueIndices.GraphicsFamily = i;
-		}
+		if (QueueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) { QueueIndices.GraphicsFamily = i; }
+
+		VkBool32 PresentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(_Device, i, VulkanSurface, &PresentSupport);
+
+		if (PresentSupport) { QueueIndices.PresentFamily = i; }
 
 		if (QueueIndices.isComplete()) { break; }
 
@@ -286,4 +322,31 @@ Application::VulkanQueueFamilyIndices Application::VulkanFindQueueFamilies(VkPhy
 	}
 
 	return QueueIndices;
+}
+
+Application::SwapChainSupportDetails Application::QuerySwapChainSupport(VkPhysicalDevice _Device)
+{
+	SwapChainSupportDetails Details;
+
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_Device, VulkanSurface, &Details.Capabilities);
+
+	uint32_t FormatCount;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(_Device, VulkanSurface, &FormatCount, nullptr);
+
+	if (FormatCount != 0)
+	{
+		Details.Formats.resize(FormatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(_Device, VulkanSurface, &FormatCount, Details.Formats.data());
+	}
+
+	uint32_t PresentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(_Device, VulkanSurface, &PresentModeCount, nullptr);
+
+	if (PresentModeCount != 0)
+	{
+		Details.PresentModes.resize(FormatCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(_Device, VulkanSurface, &PresentModeCount, Details.PresentModes.data());
+	}
+
+	return Details;
 }
