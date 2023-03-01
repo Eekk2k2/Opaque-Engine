@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <optional>
+#include <cstdint>
+#include <limits>
+#include <algorithm>
 #include <set>
 
 #define GLFW_INCLUDE_VULKAN
@@ -43,6 +46,9 @@ public:
 	/// </summary>
 	GLFWwindow* ApplicationWindow;
 
+	/// <summary>
+	/// The GLFW cursor object for this application. Use Application::SetCursor() to change it.
+	/// </summary>
 	GLFWcursor* ApplicationCursor;
 
 	/// <summary>
@@ -212,14 +218,25 @@ private:
 	/// This function creats a Vulkan instance and configures it.
 	/// </summary>
 	void CreateVulkanInstance();
+	
+	/// <summary>
+	/// Function for creating the swap chain.
+	/// </summary>
+	void CreateSwapChain();
 
 	/// <summary>
 	/// This function chooses which device to use. 
 	/// </summary>
 	void VulkanPickPhysicalDevice();
 
+	/// <summary>
+	/// Undocumented
+	/// </summary>
 	void VulkanCreateLogicalDevice();
 
+	/// <summary>
+	/// Undocumented
+	/// </summary>
 	void VulkanCreateSurface();
 
 	/// <summary>
@@ -242,8 +259,29 @@ private:
 	/// <returns></returns>
 	bool isDeviceSuitable(VkPhysicalDevice _Device); // TODO : !IMPORTANT! https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Physical_devices_and_queue_families - rateDeviceSustainability();, let the user choose or pick the first device and let the user change afterwards.
 
+	/// <summary>
+	/// Undocumented
+	/// </summary>
+	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& Capabilities);
+
+	/// <summary>
+	/// Undocumented
+	/// </summary>
+	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& AvailableFormats);	
+	
+	/// <summary>
+	/// Undocumented
+	/// </summary>
+	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& AvailablePresentModes);
+
+	/// <summary>
+	/// Undocumented
+	/// </summary>
 	VulkanQueueFamilyIndices VulkanFindQueueFamilies(VkPhysicalDevice _Device);
 
+	/// <summary>
+	/// Undocumented
+	/// </summary>
 	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice _Device);
 };
 
@@ -256,4 +294,10 @@ private:
 	to explicitly prefer a physical device that supports drawing and 
 	presentation in the same queue for improved performance.
 	https://vulkan-tutorial.com/en/Drawing_a_triangle/Presentation/Window_surface
+
+	Use VK_PRESENT_MODE_MAILBOX_KHR due to something that looks like 
+	'tripple buffering' for more frames, energy inefficient though so 
+	VK_PRESENT_MODE_FIFO_KHR is the one it defaults to. Of course we check if 
+	it exists, but I thought it would be best if i wrote this down.
+	Find -> "Presentation Mode" https://vulkan-tutorial.com/en/Drawing_a_triangle/Presentation/Swap_chain#page_Choosing-the-right-settings-for-the-swap-chain
 */

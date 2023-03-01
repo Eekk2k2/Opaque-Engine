@@ -135,13 +135,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Application\Config\ConfigurationsManager.cpp" />
     <ClCompile Include="Source\Application\Application.cpp" />
     <ClCompile Include="Source\Application\Debug\Debug.cpp" />
     <ClCompile Include="Source\Application\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Application\Config\ConfigurationsManager.h" />
     <ClInclude Include="Source\Application\Application.h" />
     <ClInclude Include="Source\Application\Debug\Debug.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Source\Application\Debug\hardware-log.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

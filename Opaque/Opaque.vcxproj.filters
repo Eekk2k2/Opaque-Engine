@@ -24,6 +24,9 @@
     <ClCompile Include="Source\Application\Application.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Source\Application\Config\ConfigurationsManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source\Application\Application.h">
@@ -32,5 +35,11 @@
     <ClInclude Include="Source\Application\Debug\Debug.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Application\Config\ConfigurationsManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Source\Application\Debug\hardware-log.json" />
   </ItemGroup>
 </Project>

@@ -167,6 +167,30 @@ void Application::CreateVulkanInstance()
 		throw std::runtime_error("Failed to create a Vulkan Instance!"); /* TODO: debug.log(); */
 }
 
+void Application::CreateSwapChain()
+{
+	SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(VulkanPhysicalDevice);
+
+	VkSurfaceFormatKHR SurfaceFormat = ChooseSwapSurfaceFormat(SwapChainSupport.Formats);
+	VkPresentModeKHR PresentMode = ChooseSwapPresentMode(SwapChainSupport.PresentModes);
+	VkExtent2D Extent = ChooseSwapExtent(SwapChainSupport.Capabilities);
+
+	uint32_t ImageCount = SwapChainSupport.Capabilities.minImageCount + 1;
+
+	if (SwapChainSupport.Capabilities.maxImageCount > 0 && ImageCount > SwapChainSupport.Capabilities.maxImageCount)
+		ImageCount = SwapChainSupport.Capabilities.maxImageCount;
+
+	VkSwapchainCreateInfoKHR SwapchainCreateInfo{};
+	SwapchainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	SwapchainCreateInfo.surface = VulkanSurface;
+	SwapchainCreateInfo.minImageCount = ImageCount;
+	SwapchainCreateInfo.imageFormat = SurfaceFormat.format;
+	SwapchainCreateInfo.imageColorSpace = SurfaceFormat.colorSpace;
+	SwapchainCreateInfo.imageExtent = Extent;
+	SwapchainCreateInfo.imageArrayLayers = 1;
+	SwapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+}
+
 void Application::VulkanPickPhysicalDevice()
 {
 	uint32_t DeviceCount = 0;
@@ -289,11 +313,53 @@ bool Application::isDeviceSuitable(VkPhysicalDevice _Device)
 	if (ExtensionsSupported)
 	{
 		SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(_Device);
-		SwapChainAdequate = !SwapChainSupport.Formats.empty() && !SwapChainSupport.PresentModes.empty();
+		SwapChainAdequate = !SwapChainSupport.Formats.empty() && !SwapChainSupport.PresentModes.empty(); // Failed to find a suitable GPU
 	}
 	// ... more checks
 
-	return QueueIndices.isComplete() && ExtensionsSupported && !SwapChainAdequate; // NEXT STEP (TODO) : "Choosing the right settings for the swap chain" https://vulkan-tutorial.com/en/Drawing_a_triangle/Presentation/Swap_chain
+	return QueueIndices.isComplete() && ExtensionsSupported && !SwapChainAdequate;
+}
+
+VkExtent2D Application::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& Capabilities)
+{
+	if (Capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
+	{
+		return Capabilities.currentExtent;
+	} 
+	else
+	{
+		int width, height;
+		glfwGetFramebufferSize(ApplicationWindow, &width, &height);
+
+		VkExtent2D ActualExtent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+		ActualExtent.width = std::clamp(ActualExtent.width, Capabilities.minImageExtent.width, Capabilities.maxImageExtent.width);
+		ActualExtent.height = std::clamp(ActualExtent.height, Capabilities.minImageExtent.height, Capabilities.maxImageExtent.height);
+
+		return ActualExtent;
+	}
+}
+
+VkSurfaceFormatKHR Application::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& AvailableFormats)
+{
+	for (const auto& AvailableFormat : AvailableFormats)
+	{
+		if (AvailableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && AvailableFormat.colorSpace == VK_COLORSPACE_SRGB_NONLINEAR_KHR) // Preffered
+			return AvailableFormat;
+	}
+
+	return AvailableFormats[0]; // If the preffered one isnt here for us we just return the first option, so if you are having issues related to wierd color space and color values look here.
+}
+
+VkPresentModeKHR Application::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& AvailablePresentModes)
+{	
+	for (const auto& AvailablePresentMode : AvailablePresentModes)
+	{
+		if (AvailablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) // Preffered; more frames traded for higher energy cost
+		{
+			return AvailablePresentMode;
+		}
+	}
+	return VK_PRESENT_MODE_FIFO_KHR; 
 }
 
 Application::VulkanQueueFamilyIndices Application::VulkanFindQueueFamilies(VkPhysicalDevice _Device)
