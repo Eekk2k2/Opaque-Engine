@@ -27,12 +27,12 @@ public:
 	/// <summary>
 	/// The x size of the applcation window (*ApplcationWindow from Applcation.h) This value is a constant.
 	/// </summary>
-	const uint32_t ApplcationWidth = 1920;
+	const uint32_t ApplicationWidth = 1920;
 
 	/// <summary>
 	/// The y size of the applcation window (*ApplcationWindow from Applcation.h) This value is a constant.
 	/// </summary>
-	const uint32_t ApplcationHeight = 1080;
+	const uint32_t ApplicationHeight = 1080;
 
 	// ------------------------------ Application ---
 
@@ -70,7 +70,12 @@ private:
 	/// </summary>
 	VkInstance VulkanInstance;
 
+	/// <summary>
+	/// Vulkan surface
+	/// </summary>
 	VkSurfaceKHR VulkanSurface;
+
+	VkSwapchainKHR VulkanSwapchain;
 
 	/// <summary>
 	/// This value represents the selected physical device in the Vulkan graphics API 
@@ -82,20 +87,15 @@ private:
 	/// </summary>
 	VkDevice VulkanDevice;
 
+	/// <summary>
+	/// Vulkan graphics queue
+	/// </summary>
 	VkQueue GraphicsQueue;
 
-	VkQueue PresentQueue;
-
 	/// <summary>
-	/// Vector over the validation layers for the vulkan instance
+	/// Vulkan present queue
 	/// </summary>
-	/// <param name="LogMessage"></param>
-	/// <param name="TYPE"></param>
-	const std::vector<const char*> ValidationLayers =
-	{
-		"VK_LAYER_KHRONOS_validation"
-	};
-
+	VkQueue PresentQueue;
 
 #ifdef NDEBUG
 	/// <summary>
@@ -108,6 +108,47 @@ private:
 	/// </summary>
 	const bool EnableValidationLayers = true;
 #endif
+
+	/// <summary>
+	/// Vector over the validation layers for the vulkan instance
+	/// </summary>
+	/// <param name="LogMessage"></param>
+	/// <param name="TYPE"></param>
+	const std::vector<const char*> ValidationLayers =
+	{
+		"VK_LAYER_KHRONOS_validation"
+	};
+
+	/// <summary>
+	/// I know what this is but not how to explain it TODO : Find out eventually
+	/// </summary>
+	struct VulkanQueueFamilyIndices
+	{
+		std::optional<uint32_t> GraphicsFamily;
+		std::optional<uint32_t> PresentFamily;
+
+		bool isComplete()
+		{
+			return GraphicsFamily.has_value() && PresentFamily.has_value();
+		}
+	};
+
+	/// <summary>
+	/// Checking for Swap Chain support isnt good enough, we need to check the more specific details and that is what this struct is for.
+	/// </summary>
+	struct SwapChainSupportDetails
+	{
+		VkSurfaceCapabilitiesKHR Capabilities;
+		std::vector<VkSurfaceFormatKHR> Formats;
+		std::vector<VkPresentModeKHR> PresentModes;
+	};
+
+	/// <summary>
+	/// I know what this is but not how to explain it TODO : Find out eventually
+	/// </summary>
+	const std::vector<const char*> DeviceExtensions = {
+		VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	};
 
 	/// <summary>
 	/// Call this to initialize something. This will be called before start(); which you can use for events in game.
@@ -182,37 +223,6 @@ private:
 	void InitializeCursor();
 
 	// ------------------------------ Vulkan ---
-
-	/// <summary>
-	/// I know what this is but not how to explain it TODO : Find out eventually
-	/// </summary>
-	struct VulkanQueueFamilyIndices
-	{
-		std::optional<uint32_t> GraphicsFamily;
-		std::optional<uint32_t> PresentFamily;
-
-		bool isComplete()
-		{
-			return GraphicsFamily.has_value() && PresentFamily.has_value();
-		}
-	};
-
-	/// <summary>
-	/// Checking for Swap Chain support isnt good enough, we need to check the more specific details and that is what this struct is for.
-	/// </summary>
-	struct SwapChainSupportDetails
-	{
-		VkSurfaceCapabilitiesKHR Capabilities;
-		std::vector<VkSurfaceFormatKHR> Formats;
-		std::vector<VkPresentModeKHR> PresentModes;
-	};
-
-	/// <summary>
-	/// I know what this is but not how to explain it TODO : Find out eventually
-	/// </summary>
-	const std::vector<const char*> DeviceExtensions = {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME
-	};
 
 	/// <summary>
 	/// This function creats a Vulkan instance and configures it.

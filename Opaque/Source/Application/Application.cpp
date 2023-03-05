@@ -51,6 +51,7 @@ void Application::Update()
 void Application::Cleanup()
 {
 	// Vulkan
+	vkDestroySwapchainKHR(VulkanDevice, VulkanSwapchain, nullptr);
 	vkDestroyDevice(VulkanDevice, nullptr);
 	vkDestroySurfaceKHR(VulkanInstance, VulkanSurface, nullptr);
 	vkDestroyInstance(VulkanInstance, nullptr);
@@ -124,7 +125,7 @@ void Application::InitializeWindow()
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // Since we are using Vulkan we need to tell GLFW
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // Disables resizing. Change this if you want. The callback is FramebufferResizeCallback(GLFWwindow* window, int width, int height);
 
-	ApplicationWindow = glfwCreateWindow(ApplcationWidth, ApplcationHeight, ApplicationName, nullptr, nullptr); // Sets the ApplicationWindow variable. TODO : When the camera gets implements errors are going to happen here
+	ApplicationWindow = glfwCreateWindow(ApplicationWidth, ApplicationHeight, ApplicationName, nullptr, nullptr); // Sets the ApplicationWindow variable. TODO : When the camera gets implements errors are going to happen here
 }
 
 void Application::InitializeCursor()
@@ -135,7 +136,6 @@ void Application::InitializeCursor()
 // ------------------------------ Update Functions ---
 
 // ------------------------------ Other Functions ---
-
 void Application::CreateVulkanInstance()
 {
 	if (EnableValidationLayers && !CheckValidationLayerSupport()) { throw std::runtime_error("Vulkan validation layers requested, but for some reason not available."); } // Validation layers is used for various debugging processes
@@ -145,6 +145,8 @@ void Application::CreateVulkanInstance()
 	VulkanApplicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	VulkanApplicationInfo.pApplicationName = ApplicationName;
 	VulkanApplicationInfo.pEngineName = "Opaque";
+
+	VulkanApplicationInfo.apiVersion = VK_API_VERSION_1_3; // Edit this as a way to fix : pCreateInfo->imageFormat VK_FORMAT_B8G8R8A8_SRGB with tiling VK_IMAGE_TILING_OPTIMAL has no supported format features on this physical device
 
 	VkInstanceCreateInfo CreateVulkanApplicationInfo{};
 	CreateVulkanApplicationInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -209,6 +211,13 @@ void Application::VulkanCreateSwapChain()
 	}
 
 	SwapchainCreateInfo.preTransform = SwapChainSupport.Capabilities.currentTransform;
+	SwapchainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	SwapchainCreateInfo.presentMode = PresentMode;
+	SwapchainCreateInfo.clipped = VK_TRUE; // Clipping
+	SwapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	if (vkCreateSwapchainKHR(VulkanDevice, &SwapchainCreateInfo, nullptr, &VulkanSwapchain) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create swap chain!");
 }
 
 void Application::VulkanPickPhysicalDevice()
