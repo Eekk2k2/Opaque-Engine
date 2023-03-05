@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "Manager.h"
 
 // ------------------------------ Callbacks ---
 
@@ -113,6 +114,7 @@ void Application::InitializeVulkan()
 	VulkanCreateSurface();
 	VulkanPickPhysicalDevice();
 	VulkanCreateLogicalDevice();
+	VulkanCreateSwapChain();
 }
 
 void Application::InitializeWindow()
@@ -167,7 +169,7 @@ void Application::CreateVulkanInstance()
 		throw std::runtime_error("Failed to create a Vulkan Instance!"); /* TODO: debug.log(); */
 }
 
-void Application::CreateSwapChain()
+void Application::VulkanCreateSwapChain()
 {
 	SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(VulkanPhysicalDevice);
 
@@ -189,6 +191,24 @@ void Application::CreateSwapChain()
 	SwapchainCreateInfo.imageExtent = Extent;
 	SwapchainCreateInfo.imageArrayLayers = 1;
 	SwapchainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	VulkanQueueFamilyIndices QueueIndices = VulkanFindQueueFamilies(VulkanPhysicalDevice);
+	uint32_t QueueFamilyIndices[] = { QueueIndices.GraphicsFamily.has_value(), QueueIndices.PresentFamily.has_value() };
+
+	if (QueueIndices.GraphicsFamily != QueueIndices.PresentFamily)
+	{
+		SwapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		SwapchainCreateInfo.queueFamilyIndexCount = 2;
+		SwapchainCreateInfo.pQueueFamilyIndices = QueueFamilyIndices;
+	}
+	else
+	{
+		SwapchainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		SwapchainCreateInfo.queueFamilyIndexCount = 0; // Not needed
+		SwapchainCreateInfo.pQueueFamilyIndices = nullptr;// Not needed
+	}
+
+	SwapchainCreateInfo.preTransform = SwapChainSupport.Capabilities.currentTransform;
 }
 
 void Application::VulkanPickPhysicalDevice()
@@ -204,7 +224,7 @@ void Application::VulkanPickPhysicalDevice()
 	for (const auto& Device : Devices)
 	{
 		if (isDeviceSuitable(Device)) { VulkanPhysicalDevice = Device; break; }
-		else { throw std::runtime_error("Failed to find a suitable GPU."); }
+		else { throw std::runtime_error("No suitabke"); }
 	}
 
 	if (VulkanPhysicalDevice == VK_NULL_HANDLE) { throw std::runtime_error("Failed to find a suitable GPU || LINE : " + __LINE__); }
@@ -312,12 +332,12 @@ bool Application::isDeviceSuitable(VkPhysicalDevice _Device)
 	bool SwapChainAdequate = false;
 	if (ExtensionsSupported)
 	{
-		SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(_Device);
+ 		SwapChainSupportDetails SwapChainSupport = QuerySwapChainSupport(_Device);
 		SwapChainAdequate = !SwapChainSupport.Formats.empty() && !SwapChainSupport.PresentModes.empty(); // Failed to find a suitable GPU
 	}
 	// ... more checks
 
-	return QueueIndices.isComplete() && ExtensionsSupported && !SwapChainAdequate;
+	return QueueIndices.isComplete() && ExtensionsSupported && SwapChainAdequate;
 }
 
 VkExtent2D Application::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& Capabilities)
@@ -410,7 +430,7 @@ Application::SwapChainSupportDetails Application::QuerySwapChainSupport(VkPhysic
 
 	if (PresentModeCount != 0)
 	{
-		Details.PresentModes.resize(FormatCount);
+		Details.PresentModes.resize(PresentModeCount);
 		vkGetPhysicalDeviceSurfacePresentModesKHR(_Device, VulkanSurface, &PresentModeCount, Details.PresentModes.data());
 	}
 

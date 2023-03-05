@@ -222,7 +222,7 @@ private:
 	/// <summary>
 	/// Function for creating the swap chain.
 	/// </summary>
-	void CreateSwapChain();
+	void VulkanCreateSwapChain();
 
 	/// <summary>
 	/// This function chooses which device to use. 
@@ -260,17 +260,17 @@ private:
 	bool isDeviceSuitable(VkPhysicalDevice _Device); // TODO : !IMPORTANT! https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Physical_devices_and_queue_families - rateDeviceSustainability();, let the user choose or pick the first device and let the user change afterwards.
 
 	/// <summary>
-	/// Undocumented
+	/// This function chooses the swap extent.
 	/// </summary>
 	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& Capabilities);
 
 	/// <summary>
-	/// Undocumented
+	/// This function chooses the swap surface format.
 	/// </summary>
 	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& AvailableFormats);	
 	
 	/// <summary>
-	/// Undocumented
+	/// This function chooses the swap present mode.
 	/// </summary>
 	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& AvailablePresentModes);
 
