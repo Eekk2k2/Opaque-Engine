@@ -135,26 +135,39 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Shaders\ShaderManager.cpp" />
     <ClCompile Include="Source\Objects\Opaque\Object.cpp" />
     <ClCompile Include="Source\Objects\Opaque\Reactant.cpp" />
-    <ClCompile Include="Source\Application\Manager.cpp" />
-    <ClCompile Include="Source\Components\Opaque\Catalyst.cpp" />
     <ClCompile Include="Source\Application\Config\ConfigurationsManager.cpp" />
     <ClCompile Include="Source\Application\Application.cpp" />
     <ClCompile Include="Source\Application\Debug\Debug.cpp" />
     <ClCompile Include="Source\Application\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Shaders\ShaderManager.h" />
+    <ClInclude Include="Source\Components\Opaque\Base\Component.cpp" />
+    <ClInclude Include="Source\Components\Opaque\Base\Component.h" />
     <ClInclude Include="Source\Objects\Opaque\Object.h" />
     <ClInclude Include="Source\Objects\Opaque\Reactant.h" />
-    <ClInclude Include="Source\Application\Manager.h" />
-    <ClInclude Include="Source\Components\Opaque\Catalyst.h" />
     <ClInclude Include="Source\Application\Config\ConfigurationsManager.h" />
     <ClInclude Include="Source\Application\Application.h" />
     <ClInclude Include="Source\Application\Debug\Debug.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="Source\Application\Debug\hardware-log.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\Application\Compile.bat">
+      <SubType>
+      </SubType>
+    </None>
+    <None Include="Source\Shaders\Compiled\DefaultShaderFragment.spv" />
+    <None Include="Source\Shaders\Compiled\DefaultShaderVertex.spv" />
+    <None Include="Source\Shaders\DefaultShaderVertex.vert" />
+    <None Include="Source\Shaders\DefaultShaderFragment.frag">
+      <SubType>
+      </SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

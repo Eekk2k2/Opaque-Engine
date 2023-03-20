@@ -1,5 +1,6 @@
 #include "Application.h"
-#include "Manager.h"
+
+// BIG TODO : Move every vulkan functon to a different file; too cluttered.
 
 // ------------------------------ Callbacks ---
 
@@ -51,6 +52,9 @@ void Application::Update()
 void Application::Cleanup()
 {
 	// Vulkan
+	for (auto ImageView : SwapChainImageViews)
+		vkDestroyImageView(VulkanDevice, ImageView, nullptr);
+
 	vkDestroySwapchainKHR(VulkanDevice, VulkanSwapchain, nullptr);
 	vkDestroyDevice(VulkanDevice, nullptr);
 	vkDestroySurfaceKHR(VulkanInstance, VulkanSurface, nullptr);
@@ -116,6 +120,8 @@ void Application::InitializeVulkan()
 	VulkanPickPhysicalDevice();
 	VulkanCreateLogicalDevice();
 	VulkanCreateSwapChain();
+	VulkanCreateImageViews();
+	VulkanCreateGraphicsPipeline();
 }
 
 void Application::InitializeWindow()
@@ -216,8 +222,17 @@ void Application::VulkanCreateSwapChain()
 	SwapchainCreateInfo.clipped = VK_TRUE; // Clipping
 	SwapchainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
+
+	// Finally creates the swap chain
 	if (vkCreateSwapchainKHR(VulkanDevice, &SwapchainCreateInfo, nullptr, &VulkanSwapchain) != VK_SUCCESS)
 		throw std::runtime_error("Failed to create swap chain!");
+	
+	vkGetSwapchainImagesKHR(VulkanDevice, VulkanSwapchain, &ImageCount, nullptr);
+	SwapChainImages.reserve(ImageCount);
+	vkGetSwapchainImagesKHR(VulkanDevice, VulkanSwapchain, &ImageCount, SwapChainImages.data());
+
+	VulkanSwapchainImageFormat = SurfaceFormat.format;
+	VulkanSwapchainExtent = Extent;
 }
 
 void Application::VulkanPickPhysicalDevice()
@@ -290,6 +305,110 @@ void Application::VulkanCreateSurface()
 	// Gives data to the VkSurfaceKHR Aplication::VulkanSurface;
 	if (glfwCreateWindowSurface(VulkanInstance, ApplicationWindow, nullptr, &VulkanSurface) != VK_SUCCESS)
 		throw std::runtime_error("Failed to create a window surface. || LINE : " + __LINE__);
+}
+
+void Application::VulkanCreateImageViews()
+{
+	SwapChainImageViews.resize(SwapChainImages.size());
+
+	for (size_t i = 0; i < SwapChainImages.size(); i++)
+	{
+		VkImageViewCreateInfo ImageViewCreateInfo{};
+		ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ImageViewCreateInfo.image = SwapChainImages[i];
+		ImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D; // Can be 1D, 2D, 3D, Cubemap, etc, but since this is shown to the screen we want it to show a 2D image.
+		ImageViewCreateInfo.format = VulkanSwapchainImageFormat;
+
+		ImageViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY; // RED
+		ImageViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY; // GREED
+		ImageViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY; // BLUE
+		ImageViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY; // ALPHA
+
+		ImageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		ImageViewCreateInfo.subresourceRange.baseMipLevel = 0;
+		ImageViewCreateInfo.subresourceRange.levelCount = 1;
+		ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+		ImageViewCreateInfo.subresourceRange.layerCount = 1;
+
+		if (vkCreateImageView(VulkanDevice, &ImageViewCreateInfo, nullptr, &SwapChainImageViews[i]) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create image views!");
+		}
+	}
+}
+
+
+void Application::VulkanCreateGraphicsPipeline()
+{
+	// SHADER STAGE
+
+	std::vector<std::string> ShaderFilePaths = {
+		"E:\\Projects\\.vulkan\\Opaque\\Opaque\\Source\\Shaders\\Compiled\\DefaultShaderFragment.spv",  // Where they are located to me, persitent data paths is not a thing yet
+		"E:\\Projects\\.vulkan\\Opaque\\Opaque\\Source\\Shaders\\Compiled\\DefaultShaderVertex.spv",  // Where they are located to me, persitent data paths is not a thing yet
+	};
+
+	std::vector<char> VertexShaderCodeBuffer = ShaderManager::ReadShaderFile(ShaderFilePaths[0]);
+	std::vector<char> FragmentShaderCodeBuffer = ShaderManager::ReadShaderFile(ShaderFilePaths[1]);
+
+	VkShaderModule VertexShaderModule = ShaderManager::VulkanCreateShaderModule(VertexShaderCodeBuffer, VulkanDevice);
+	VkShaderModule FragmentShaderModule = ShaderManager::VulkanCreateShaderModule(FragmentShaderCodeBuffer, VulkanDevice);
+
+	VkPipelineShaderStageCreateInfo VertexShaderStageInfo{};
+	VertexShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	VertexShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+	VertexShaderStageInfo.module = VertexShaderModule;
+	VertexShaderStageInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo FragmentShaderStageInfo{};
+	FragmentShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	FragmentShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+	FragmentShaderStageInfo.module = FragmentShaderModule;
+	FragmentShaderStageInfo.pName = "main";
+
+	VkPipelineShaderStageCreateInfo ShaderStagesCreateInfo[] = { VertexShaderStageInfo, FragmentShaderStageInfo };
+
+	// VERTEX INPUT
+
+	VkPipelineVertexInputStateCreateInfo VertexInputCreateInfo{};
+	VertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+	VertexInputCreateInfo.vertexBindingDescriptionCount = 0;
+	VertexInputCreateInfo.pVertexBindingDescriptions = nullptr;
+	VertexInputCreateInfo.vertexAttributeDescriptionCount = 0;
+	VertexInputCreateInfo.pVertexAttributeDescriptions = nullptr;
+
+	// INPUT ASSEMBLY
+
+	VkPipelineInputAssemblyStateCreateInfo InputAssemblyCreateInfo{};
+	InputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+	InputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	InputAssemblyCreateInfo.primitiveRestartEnable = VK_FALSE;
+
+	// VIEWPORT AND SCISSORS
+
+	VkViewport VulkanViewport{};
+	VulkanViewport.x = 0.0f;
+	VulkanViewport.y = 0.0f;
+	VulkanViewport.width = (float)VulkanSwapchainExtent.width;
+	VulkanViewport.height = (float)VulkanSwapchainExtent.height;
+	VulkanViewport.minDepth = 0.0f;
+	VulkanViewport.maxDepth = 1.0f;
+
+	VkRect2D VulkanScissor{};
+	VulkanScissor.offset = { 0, 0 };
+	VulkanScissor.extent = VulkanSwapchainExtent;
+
+	std::vector<VkDynamicState> DynamicStates = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_SCISSOR
+	};
+
+	VkPipelineDynamicStateCreateInfo DynamicStateCreateInfo{};
+	DynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	DynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(DynamicStates.size());
+	DynamicStateCreateInfo.pDynamicStates = DynamicStates.data();
+
+	vkDestroyShaderModule(VulkanDevice, VertexShaderModule, nullptr);
+	vkDestroyShaderModule(VulkanDevice, FragmentShaderModule , nullptr);
 }
 
 bool Application::CheckValidationLayerSupport()
@@ -412,7 +531,6 @@ Application::VulkanQueueFamilyIndices Application::VulkanFindQueueFamilies(VkPhy
 		if (PresentSupport) { QueueIndices.PresentFamily = i; }
 
 		if (QueueIndices.isComplete()) { break; }
-
 		i++;
 	}
 

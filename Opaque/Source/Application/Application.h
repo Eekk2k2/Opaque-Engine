@@ -6,6 +6,8 @@
 #include <limits>
 #include <algorithm>
 #include <set>
+#include <fstream>
+#include <string>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -16,7 +18,9 @@
 #include <glm/mat4x4.hpp>
 
 #include "Debug/Debug.h"
+#include "..\Shaders\ShaderManager.h"
 
+using namespace ShaderManager;
 
 class Application
 {
@@ -74,8 +78,6 @@ private:
 	/// Vulkan surface
 	/// </summary>
 	VkSurfaceKHR VulkanSurface;
-
-	VkSwapchainKHR VulkanSwapchain;
 
 	/// <summary>
 	/// This value represents the selected physical device in the Vulkan graphics API 
@@ -149,6 +151,25 @@ private:
 	const std::vector<const char*> DeviceExtensions = {
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
 	};
+
+	/// <summary>
+	/// Undocumented
+	/// </summary>
+	std::vector<VkImage> SwapChainImages;
+
+	/// <summary>
+	/// Undocumented
+	/// </summary>
+	std::vector<VkImageView> SwapChainImageViews;
+
+	/// <summary>
+	/// The swapchain
+	/// </summary>
+	VkSwapchainKHR VulkanSwapchain;
+
+	VkFormat VulkanSwapchainImageFormat;
+
+	VkExtent2D VulkanSwapchainExtent;
 
 	/// <summary>
 	/// Call this to initialize something. This will be called before start(); which you can use for events in game.
@@ -250,6 +271,16 @@ private:
 	void VulkanCreateSurface();
 
 	/// <summary>
+	/// Undocumented
+	/// </summary>
+	void VulkanCreateImageViews();
+
+	/// <summary>
+	/// Pain.
+	/// </summary>
+	void VulkanCreateGraphicsPipeline();
+
+	/// <summary>
 	/// Checks for validation layer support. Used for debugging.
 	/// </summary>
 	/// <returns></returns>
@@ -293,6 +324,8 @@ private:
 	/// Undocumented
 	/// </summary>
 	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice _Device);
+
+
 };
 
 // HERE YOU WILL SEE FUTURE TODOS WHICH I CANT PLACE ANYWHERE ELSE

@@ -27,16 +27,13 @@
     <ClCompile Include="Source\Application\Config\ConfigurationsManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Components\Opaque\Catalyst.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Source\Application\Manager.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Objects\Opaque\Reactant.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Objects\Opaque\Object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Shaders\ShaderManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -50,20 +47,30 @@
     <ClInclude Include="Source\Application\Config\ConfigurationsManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Source\Components\Opaque\Catalyst.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Source\Application\Manager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Source\Objects\Opaque\Reactant.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Source\Objects\Opaque\Object.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Source\Components\Opaque\Base\Component.cpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Components\Opaque\Base\Component.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\Shaders\ShaderManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Source\Application\Debug\hardware-log.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\Shaders\DefaultShaderVertex.vert" />
+    <None Include="Source\Shaders\DefaultShaderFragment.frag" />
+    <None Include="Source\Application\Compile.bat" />
+    <None Include="Source\Shaders\Compiled\DefaultShaderFragment.spv" />
+    <None Include="Source\Shaders\Compiled\DefaultShaderVertex.spv" />
   </ItemGroup>
 </Project>
