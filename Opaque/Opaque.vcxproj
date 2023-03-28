@@ -159,7 +159,7 @@
     <Text Include="Source\Application\Debug\hardware-log.json" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Source\Application\Compile.bat">
+    <None Include="Source\Shaders\Compile.bat">
       <SubType>
       </SubType>
     </None>

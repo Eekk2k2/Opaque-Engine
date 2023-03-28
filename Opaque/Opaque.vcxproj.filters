@@ -75,7 +75,7 @@
   <ItemGroup>
     <None Include="Source\Shaders\DefaultShaderVertex.vert" />
     <None Include="Source\Shaders\DefaultShaderFragment.frag" />
-    <None Include="Source\Application\Compile.bat" />
+    <None Include="Source\Shaders\Compile.bat" />
     <None Include="Source\Shaders\Compiled\DefaultShaderFragment.spv" />
     <None Include="Source\Shaders\Compiled\DefaultShaderVertex.spv" />
   </ItemGroup>

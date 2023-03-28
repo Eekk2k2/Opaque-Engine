@@ -1,9 +1,20 @@
 #include "OEVulkan.h"
 
-OEVulkan::OEVulkanHandler::OEVulkanHandler() {} // Remember to call InitializeVulkan when using this!
+OEVulkan::OEVulkanHandler::OEVulkanHandler() { std::cout << "Opaque Engine Vulkan Handler is being constructed." << std::endl; } // Remember to call InitializeVulkan when using this!
 
 OEVulkan::OEVulkanHandler::OEVulkanHandler(OEVulkanHandlerCreateInfo CreateInfo) {}
 
+
+void OEVulkan::OEVulkanHandler::OEVulkanCleanup()
+{
+	for (auto ImageView : this->SwapchainImageViews)
+		vkDestroyImageView(this->VulkanDevice, ImageView, nullptr);
+
+	vkDestroySwapchainKHR(this->VulkanDevice, this->VulkanSwapchain, nullptr);
+	vkDestroyDevice(this->VulkanDevice, nullptr);
+	vkDestroySurfaceKHR(this->VulkanInstance, this->VulkanSurfaceKHR, nullptr);
+	vkDestroyInstance(this->VulkanInstance, nullptr);
+}
 
 
 

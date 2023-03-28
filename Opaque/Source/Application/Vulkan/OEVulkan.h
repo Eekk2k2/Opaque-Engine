@@ -48,7 +48,10 @@ namespace OEVulkan
 
 		//void OEVulkanUpdate();
 
-		//void OEVulkanCleanup();
+		/// <summary>
+		/// Gets directly called from Application::Cleaup();
+		/// </summary>
+		void OEVulkanCleanup();
 
 		/* Vulkan Configurations and Application Settings */
 

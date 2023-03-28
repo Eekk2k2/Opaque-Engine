@@ -40,14 +40,8 @@ void Application::Update()
 
 void Application::Cleanup()
 {
-	// Vulkan
-	for (auto ImageView : SwapChainImageViews)
-		vkDestroyImageView(VulkanDevice, ImageView, nullptr);
-
-	vkDestroySwapchainKHR(VulkanDevice, VulkanSwapchain, nullptr);
-	vkDestroyDevice(VulkanDevice, nullptr);
-	vkDestroySurfaceKHR(VulkanInstance, VulkanSurface, nullptr);
-	vkDestroyInstance(VulkanInstance, nullptr);
+	// OEVulkan cleanup
+	OpaqueEngineVulkanHandler.OEVulkanCleanup();
 
 	// GLFW
 	glfwDestroyCursor(ApplicationCursor);
@@ -112,7 +106,6 @@ void Application::InitializeVulkan()
 
 	OpaqueEngineVulkanHandlerCreateInfo.pApplicationWindow = this->ApplicationWindow;
 
-	OEVulkan::OEVulkanHandler OpaqueEngineVulkanHandler = OEVulkan::OEVulkanHandler();
 	OEVulkan::General::InitializeVulkan(OpaqueEngineVulkanHandler, OpaqueEngineVulkanHandlerCreateInfo);
 }
 
