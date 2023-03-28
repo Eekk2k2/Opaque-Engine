@@ -1,5 +1,7 @@
 #include "OEVulkan.h"
 
+/* Opaque Engine Vulkan Handler */
+
 OEVulkan::OEVulkanHandler::OEVulkanHandler() { std::cout << "Opaque Engine Vulkan Handler is being constructed." << std::endl; } // Remember to call InitializeVulkan when using this!
 
 OEVulkan::OEVulkanHandler::OEVulkanHandler(OEVulkanHandlerCreateInfo CreateInfo) {}
@@ -7,6 +9,10 @@ OEVulkan::OEVulkanHandler::OEVulkanHandler(OEVulkanHandlerCreateInfo CreateInfo)
 
 void OEVulkan::OEVulkanHandler::OEVulkanCleanup()
 {
+	vkDestroyPipelineLayout(this->VulkanDevice, this->VulkanPipelineLayout, nullptr);
+	vkDestroyRenderPass(this->VulkanDevice, this->VulkanRenderPass, nullptr);
+	vkDestroyPipeline(this->VulkanDevice, this->VulkanGraphicsPipeline, nullptr);
+
 	for (auto ImageView : this->SwapchainImageViews)
 		vkDestroyImageView(this->VulkanDevice, ImageView, nullptr);
 
@@ -28,25 +34,26 @@ void OEVulkan::OEVulkanHandler::OEVulkanCleanup()
 
 void OEVulkan::General::InitializeVulkan
 (
-	OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler,
-	OEVulkan::OEVulkanHandlerCreateInfo OpaqueEngineVulkanHandlerCreateInfo
+	OEVulkan::OEVulkanHandler&							OpaqueEngineVulkanHandler,
+	OEVulkan::OEVulkanHandlerCreateInfo					OpaqueEngineVulkanHandlerCreateInfo
 )
 {
-	OpaqueEngineVulkanHandler.ApplicationWidth = OpaqueEngineVulkanHandlerCreateInfo.ApplicationWidth | 1;
-	OpaqueEngineVulkanHandler.ApplicationHeight = OpaqueEngineVulkanHandlerCreateInfo.ApplicationHeight;
-	OpaqueEngineVulkanHandler.ApplicationName = OpaqueEngineVulkanHandlerCreateInfo.ApplicationName;
+	OpaqueEngineVulkanHandler.ApplicationWidth		=	OpaqueEngineVulkanHandlerCreateInfo.ApplicationWidth;
+	OpaqueEngineVulkanHandler.ApplicationHeight		=	OpaqueEngineVulkanHandlerCreateInfo.ApplicationHeight;
+	OpaqueEngineVulkanHandler.ApplicationName		=	OpaqueEngineVulkanHandlerCreateInfo.ApplicationName;
 
-	OpaqueEngineVulkanHandler.pApplicationWindow = OpaqueEngineVulkanHandlerCreateInfo.pApplicationWindow;
+	OpaqueEngineVulkanHandler.pApplicationWindow	=	OpaqueEngineVulkanHandlerCreateInfo.pApplicationWindow;
 
-	OpaqueEngineVulkanHandler.VulkanAPIVersion = OpaqueEngineVulkanHandlerCreateInfo.VulkanAPIVersion;
+	OpaqueEngineVulkanHandler.VulkanAPIVersion		=	OpaqueEngineVulkanHandlerCreateInfo.VulkanAPIVersion;
 
-	OEVulkan::General::CreateInstance(OpaqueEngineVulkanHandler);
-	OEVulkan::General::CreateSurface(OpaqueEngineVulkanHandler);
-	OEVulkan::Device::PickPhysicalDevice(OpaqueEngineVulkanHandler);
-	OEVulkan::Device::CreateLogicalDevice(OpaqueEngineVulkanHandler);
-	OEVulkan::Swapchain::CreateSwapchain(OpaqueEngineVulkanHandler);
-	OEVulkan::Swapchain::CreateImageViews(OpaqueEngineVulkanHandler);
-	OEVulkan::GraphicsPipeline::CreateGraphicsPipeline(OpaqueEngineVulkanHandler);
+	OEVulkan::General::CreateInstance					(OpaqueEngineVulkanHandler);
+	OEVulkan::General::CreateSurface					(OpaqueEngineVulkanHandler);
+	OEVulkan::Device::PickPhysicalDevice				(OpaqueEngineVulkanHandler);
+	OEVulkan::Device::CreateLogicalDevice				(OpaqueEngineVulkanHandler);
+	OEVulkan::Swapchain::CreateSwapchain				(OpaqueEngineVulkanHandler);
+	OEVulkan::Swapchain::CreateImageViews				(OpaqueEngineVulkanHandler);
+	OEVulkan::GraphicsPipeline::CreateRenderPass		(OpaqueEngineVulkanHandler);
+	OEVulkan::GraphicsPipeline::CreateGraphicsPipeline	(OpaqueEngineVulkanHandler);
 }
 
 void OEVulkan::General::CreateInstance(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler)
@@ -440,6 +447,39 @@ VkPresentModeKHR OEVulkan::Swapchain::ChooseSwapPresentMode(std::vector<VkPresen
 
 /* Graphics Pipeline */
 
+void OEVulkan::GraphicsPipeline::CreateRenderPass(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler)
+{
+	VkAttachmentDescription ColorAttachmentDescription{};
+	ColorAttachmentDescription.format = OpaqueEngineVulkanHandler.VulkanSwapchainImageFormat;
+	ColorAttachmentDescription.samples = VK_SAMPLE_COUNT_1_BIT;
+	ColorAttachmentDescription.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	ColorAttachmentDescription.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	ColorAttachmentDescription.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	ColorAttachmentDescription.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	ColorAttachmentDescription.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	ColorAttachmentDescription.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VkAttachmentReference ColorAttachmentReference{};
+	ColorAttachmentReference.attachment = 0;
+	ColorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription SubpassDescription{};
+	SubpassDescription.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	SubpassDescription.colorAttachmentCount = 1;
+	SubpassDescription.pColorAttachments = &ColorAttachmentReference;
+
+	VkRenderPassCreateInfo RenderPassCreateInfo{};
+	RenderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	RenderPassCreateInfo.attachmentCount = 1;
+	RenderPassCreateInfo.pAttachments = &ColorAttachmentDescription;
+	RenderPassCreateInfo.subpassCount = 1;
+	RenderPassCreateInfo.pSubpasses = &SubpassDescription;
+
+	if (vkCreateRenderPass(OpaqueEngineVulkanHandler.VulkanDevice, &RenderPassCreateInfo, nullptr, &OpaqueEngineVulkanHandler.VulkanRenderPass) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create a render pass!");
+
+}
+
 void OEVulkan::GraphicsPipeline::CreateGraphicsPipeline(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler)
 {
 	/* SHADER STAGE */
@@ -485,7 +525,32 @@ void OEVulkan::GraphicsPipeline::CreateGraphicsPipeline(OEVulkan::OEVulkanHandle
 
 	/* Color blending */
 	VkPipelineColorBlendAttachmentState ColorBlendAttachmentState = OEVulkan::GraphicsPipeline::CreateColorBlendAttachmentState();
+	VkPipelineColorBlendStateCreateInfo ColorBlendStateCreateInfo = OEVulkan::GraphicsPipeline::CreateColorBlendState(&ColorBlendAttachmentState, 1);
 
+	/* Pipeline Layout */
+	OpaqueEngineVulkanHandler.VulkanPipelineLayout = OEVulkan::GraphicsPipeline::CreatePipelineLayout(OpaqueEngineVulkanHandler.VulkanDevice);
+
+	/* Graphics Pipeline */
+	VkGraphicsPipelineCreateInfo GraphicsPipelineCreateInfo{};
+	GraphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	GraphicsPipelineCreateInfo.stageCount = 2;
+	GraphicsPipelineCreateInfo.pStages = ShaderStagesCreateInfo.data();
+	GraphicsPipelineCreateInfo.pVertexInputState = &VertexInputCreateInfo;
+	GraphicsPipelineCreateInfo.pInputAssemblyState = &InputAssemblyCreateInfo;
+	GraphicsPipelineCreateInfo.pViewportState = &ViewportStateCreateInfo;
+	GraphicsPipelineCreateInfo.pRasterizationState = &RasterizerCreateInfo;
+	GraphicsPipelineCreateInfo.pMultisampleState = &MultisamplingCreateInfo;
+	GraphicsPipelineCreateInfo.pDepthStencilState = nullptr; // We do not have a depth stencil
+	GraphicsPipelineCreateInfo.pColorBlendState = &ColorBlendStateCreateInfo;
+	GraphicsPipelineCreateInfo.pDynamicState = &DynamicStateCreateInfo;
+	GraphicsPipelineCreateInfo.layout = OpaqueEngineVulkanHandler.VulkanPipelineLayout;
+	GraphicsPipelineCreateInfo.renderPass = OpaqueEngineVulkanHandler.VulkanRenderPass;
+	GraphicsPipelineCreateInfo.subpass = 0;
+	GraphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+	GraphicsPipelineCreateInfo.basePipelineIndex = -1; // Optional
+
+	if (vkCreateGraphicsPipelines(OpaqueEngineVulkanHandler.VulkanDevice, VK_NULL_HANDLE, 1, &GraphicsPipelineCreateInfo, nullptr, &OpaqueEngineVulkanHandler.VulkanGraphicsPipeline) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create graphics pipeline!");
 }
 
 std::vector<VkPipelineShaderStageCreateInfo> OEVulkan::GraphicsPipeline::CreateShaderStage(VkDevice _VulkanDevice)
@@ -608,6 +673,40 @@ VkPipelineColorBlendAttachmentState OEVulkan::GraphicsPipeline::CreateColorBlend
 	ColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	return ColorBlendAttachmentState;
+}
+
+VkPipelineColorBlendStateCreateInfo OEVulkan::GraphicsPipeline::CreateColorBlendState(const VkPipelineColorBlendAttachmentState* pAttachments, uint16_t AttachmentCount)
+{
+	VkPipelineColorBlendStateCreateInfo ColorBlendStateCreateInfo{};
+	ColorBlendStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+	ColorBlendStateCreateInfo.logicOpEnable = VK_FALSE;
+	ColorBlendStateCreateInfo.logicOp = VK_LOGIC_OP_COPY; // Optional
+	ColorBlendStateCreateInfo.attachmentCount = AttachmentCount;
+	ColorBlendStateCreateInfo.pAttachments = pAttachments;
+	ColorBlendStateCreateInfo.blendConstants[0] = 0.0f; // Optional
+	ColorBlendStateCreateInfo.blendConstants[1] = 0.0f; // Optional
+	ColorBlendStateCreateInfo.blendConstants[2] = 0.0f; // Optional
+	ColorBlendStateCreateInfo.blendConstants[3] = 0.0f; // Optional
+	
+
+	return ColorBlendStateCreateInfo;
+}
+
+VkPipelineLayout OEVulkan::GraphicsPipeline::CreatePipelineLayout(VkDevice _VulkanDevice)
+{
+	VkPipelineLayout _PipelineLayout;
+
+	VkPipelineLayoutCreateInfo PipelineLayoutCreateInfo{};
+	PipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	PipelineLayoutCreateInfo.setLayoutCount = 0; // Optional
+	PipelineLayoutCreateInfo.pSetLayouts = nullptr; // Optional
+	PipelineLayoutCreateInfo.pushConstantRangeCount = 0; // Optional
+	PipelineLayoutCreateInfo.pPushConstantRanges = nullptr; // Optional
+
+	if (vkCreatePipelineLayout(_VulkanDevice, &PipelineLayoutCreateInfo, nullptr, &_PipelineLayout) != VK_SUCCESS)
+		throw std::runtime_error("Failed to create pipeline layout");
+
+	return _PipelineLayout;
 }
 
 					/* Shader Manager */

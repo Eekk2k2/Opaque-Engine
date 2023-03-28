@@ -123,6 +123,14 @@ namespace OEVulkan
 
 		VkExtent2D VulkanSwapchainExtent;
 
+		/* Graphics pipeline */
+
+		VkPipeline VulkanGraphicsPipeline;
+
+		VkRenderPass VulkanRenderPass;
+
+		VkPipelineLayout VulkanPipelineLayout;
+
 	private:
 
 	};
@@ -250,6 +258,7 @@ namespace OEVulkan
 
 	namespace GraphicsPipeline
 	{
+		void CreateRenderPass(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler);
 		void CreateGraphicsPipeline(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler);
 
 		/* Stages within */
@@ -269,6 +278,12 @@ namespace OEVulkan
 		VkPipelineMultisampleStateCreateInfo CreateMultisampleState();
 
 		VkPipelineColorBlendAttachmentState CreateColorBlendAttachmentState();
+
+		VkPipelineColorBlendStateCreateInfo CreateColorBlendState(const VkPipelineColorBlendAttachmentState* pAttachments, uint16_t AttachmentCount);
+
+		VkPipelineLayout CreatePipelineLayout(VkDevice _VulkanDevice);
+
+		/* */
 
 		namespace ShaderManager
 		{
