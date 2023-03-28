@@ -77,9 +77,9 @@ namespace OEVulkan
 
 		/* Vulkan Queues */
 
-		VkQueue GraphicsQueue;
+		VkQueue VulkanGraphicsQueue;
 
-		VkQueue PresentQueue;
+		VkQueue VulkanPresentQueue;
 
 		/* Validation Layers */
 
@@ -113,9 +113,11 @@ namespace OEVulkan
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME
 		};
 
-		std::vector<VkImage> SwapchainImages;
+		std::vector<VkFramebuffer> VulkanSwapchainFramebuffers;
 
-		std::vector<VkImageView> SwapchainImageViews;
+		std::vector<VkImage> VulkanSwapchainImages;
+
+		std::vector<VkImageView> VulkanSwapchainImageViews;
 
 		VkSwapchainKHR VulkanSwapchain;
 
@@ -130,6 +132,8 @@ namespace OEVulkan
 		VkRenderPass VulkanRenderPass;
 
 		VkPipelineLayout VulkanPipelineLayout;
+
+		
 
 	private:
 
@@ -256,6 +260,11 @@ namespace OEVulkan
 		void CreateImageViews(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler);
 	};
 
+	namespace Framebuffers
+	{
+		void CreateFramebuffers(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler);
+	};
+
 	namespace GraphicsPipeline
 	{
 		void CreateRenderPass(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler);
@@ -263,7 +272,7 @@ namespace OEVulkan
 
 		/* Stages within */
 
-		std::vector<VkPipelineShaderStageCreateInfo> CreateShaderStage(VkDevice _VulkanDevice);
+		std::vector<VkPipelineShaderStageCreateInfo> CreateShaderStage(VkDevice _VulkanDevice, std::vector<VkShaderModule>& VkShaderModules);
 
 		VkPipelineVertexInputStateCreateInfo CreateVertexInputState();
 

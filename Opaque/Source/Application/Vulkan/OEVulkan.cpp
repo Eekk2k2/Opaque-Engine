@@ -13,7 +13,7 @@ void OEVulkan::OEVulkanHandler::OEVulkanCleanup()
 	vkDestroyRenderPass(this->VulkanDevice, this->VulkanRenderPass, nullptr);
 	vkDestroyPipeline(this->VulkanDevice, this->VulkanGraphicsPipeline, nullptr);
 
-	for (auto ImageView : this->SwapchainImageViews)
+	for (auto ImageView : this->VulkanSwapchainImageViews)
 		vkDestroyImageView(this->VulkanDevice, ImageView, nullptr);
 
 	vkDestroySwapchainKHR(this->VulkanDevice, this->VulkanSwapchain, nullptr);
@@ -54,6 +54,7 @@ void OEVulkan::General::InitializeVulkan
 	OEVulkan::Swapchain::CreateImageViews				(OpaqueEngineVulkanHandler);
 	OEVulkan::GraphicsPipeline::CreateRenderPass		(OpaqueEngineVulkanHandler);
 	OEVulkan::GraphicsPipeline::CreateGraphicsPipeline	(OpaqueEngineVulkanHandler);
+	OEVulkan::Framebuffers::CreateFramebuffers			(OpaqueEngineVulkanHandler);
 }
 
 void OEVulkan::General::CreateInstance(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler)
@@ -101,13 +102,13 @@ void OEVulkan::General::CreateSurface(OEVulkan::OEVulkanHandler& OpaqueEngineVul
 
 void OEVulkan::Swapchain::CreateImageViews(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler)
 {
-	OpaqueEngineVulkanHandler.SwapchainImageViews.resize(OpaqueEngineVulkanHandler.SwapchainImages.size());
+	OpaqueEngineVulkanHandler.VulkanSwapchainImageViews.resize(OpaqueEngineVulkanHandler.VulkanSwapchainImages.size());
 
-	for (size_t i = 0; i < OpaqueEngineVulkanHandler.SwapchainImages.size(); i++)
+	for (size_t i = 0; i < OpaqueEngineVulkanHandler.VulkanSwapchainImages.size(); i++)
 	{
 		VkImageViewCreateInfo ImageViewCreateInfo{};
 		ImageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		ImageViewCreateInfo.image = OpaqueEngineVulkanHandler.SwapchainImages[i];
+		ImageViewCreateInfo.image = OpaqueEngineVulkanHandler.VulkanSwapchainImages[i];
 		ImageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D; // Can be 1D, 2D, 3D, Cubemap, etc, but since this is shown to the screen we want it to show a 2D image.
 		ImageViewCreateInfo.format = OpaqueEngineVulkanHandler.VulkanSwapchainImageFormat;
 
@@ -122,7 +123,7 @@ void OEVulkan::Swapchain::CreateImageViews(OEVulkan::OEVulkanHandler& OpaqueEngi
 		ImageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 		ImageViewCreateInfo.subresourceRange.layerCount = 1;
 
-		if (vkCreateImageView(OpaqueEngineVulkanHandler.VulkanDevice, &ImageViewCreateInfo, nullptr, &OpaqueEngineVulkanHandler.SwapchainImageViews[i]) != VK_SUCCESS)
+		if (vkCreateImageView(OpaqueEngineVulkanHandler.VulkanDevice, &ImageViewCreateInfo, nullptr, &OpaqueEngineVulkanHandler.VulkanSwapchainImageViews[i]) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Failed to create image views!");
 		}
@@ -238,8 +239,8 @@ void OEVulkan::Device::CreateLogicalDevice(OEVulkan::OEVulkanHandler& OpaqueEngi
 	if (vkCreateDevice(OpaqueEngineVulkanHandler.VulkanPhysicalDevice, &DeviceCreateInfo, nullptr, &OpaqueEngineVulkanHandler.VulkanDevice) != VK_SUCCESS)
 		throw std::runtime_error("Failed to create logical device. || LINE : " + __LINE__);
 
-	vkGetDeviceQueue(OpaqueEngineVulkanHandler.VulkanDevice, QueueIndices.GraphicsFamily.value(), 0, &OpaqueEngineVulkanHandler.GraphicsQueue);
-	vkGetDeviceQueue(OpaqueEngineVulkanHandler.VulkanDevice, QueueIndices.PresentFamily.value(), 0, &OpaqueEngineVulkanHandler.PresentQueue);
+	vkGetDeviceQueue(OpaqueEngineVulkanHandler.VulkanDevice, QueueIndices.GraphicsFamily.value(), 0, &OpaqueEngineVulkanHandler.VulkanGraphicsQueue);
+	vkGetDeviceQueue(OpaqueEngineVulkanHandler.VulkanDevice, QueueIndices.PresentFamily.value(), 0, &OpaqueEngineVulkanHandler.VulkanPresentQueue);
 }
 
 bool OEVulkan::Device::isDeviceSuitable(VkPhysicalDevice _Device, OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler)
@@ -388,8 +389,8 @@ void OEVulkan::Swapchain::CreateSwapchain(OEVulkan::OEVulkanHandler& OpaqueEngin
 		throw std::runtime_error("Failed to create swap chain!");
 
 	vkGetSwapchainImagesKHR(OpaqueEngineVulkanHandler.VulkanDevice, OpaqueEngineVulkanHandler.VulkanSwapchain, &ImageCount, nullptr);
-	OpaqueEngineVulkanHandler.SwapchainImages.reserve(ImageCount);
-	vkGetSwapchainImagesKHR(OpaqueEngineVulkanHandler.VulkanDevice, OpaqueEngineVulkanHandler.VulkanSwapchain, &ImageCount, OpaqueEngineVulkanHandler.SwapchainImages.data());
+	OpaqueEngineVulkanHandler.VulkanSwapchainImages.reserve(ImageCount);
+	vkGetSwapchainImagesKHR(OpaqueEngineVulkanHandler.VulkanDevice, OpaqueEngineVulkanHandler.VulkanSwapchain, &ImageCount, OpaqueEngineVulkanHandler.VulkanSwapchainImages.data());
 
 	OpaqueEngineVulkanHandler.VulkanSwapchainImageFormat = SurfaceFormat.format;
 	OpaqueEngineVulkanHandler.VulkanSwapchainExtent = Extent;
@@ -445,6 +446,42 @@ VkPresentModeKHR OEVulkan::Swapchain::ChooseSwapPresentMode(std::vector<VkPresen
 
 
 
+
+/* Framebuffers */
+
+void OEVulkan::Framebuffers::CreateFramebuffers(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler)
+{
+	OpaqueEngineVulkanHandler.VulkanSwapchainFramebuffers.resize(OpaqueEngineVulkanHandler.VulkanSwapchainImageViews.size());
+
+	for (size_t i = 0; i < OpaqueEngineVulkanHandler.VulkanSwapchainImageViews.size(); i++)
+	{
+		std::vector<VkImageView> Attachments = {
+			OpaqueEngineVulkanHandler.VulkanSwapchainImageViews[i]
+		};
+
+		VkFramebufferCreateInfo FramebufferCreateInfo{};
+		FramebufferCreateInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		FramebufferCreateInfo.renderPass = OpaqueEngineVulkanHandler.VulkanRenderPass;
+		FramebufferCreateInfo.attachmentCount = 1;
+		FramebufferCreateInfo.pAttachments = Attachments.data();
+		FramebufferCreateInfo.width = OpaqueEngineVulkanHandler.VulkanSwapchainExtent.width;
+		FramebufferCreateInfo.height = OpaqueEngineVulkanHandler.VulkanSwapchainExtent.height;
+		FramebufferCreateInfo.layers = 1;
+
+		if (vkCreateFramebuffer(OpaqueEngineVulkanHandler.VulkanDevice, &FramebufferCreateInfo, nullptr, &OpaqueEngineVulkanHandler.VulkanSwapchainFramebuffers[i]) != VK_SUCCESS)
+			throw std::runtime_error("Failed to create a framebuffer.");
+	}
+}
+
+
+
+
+
+
+
+
+
+
 /* Graphics Pipeline */
 
 void OEVulkan::GraphicsPipeline::CreateRenderPass(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler)
@@ -483,7 +520,8 @@ void OEVulkan::GraphicsPipeline::CreateRenderPass(OEVulkan::OEVulkanHandler& Opa
 void OEVulkan::GraphicsPipeline::CreateGraphicsPipeline(OEVulkan::OEVulkanHandler& OpaqueEngineVulkanHandler)
 {
 	/* SHADER STAGE */
-	std::vector<VkPipelineShaderStageCreateInfo> ShaderStagesCreateInfo = OEVulkan::GraphicsPipeline::CreateShaderStage(OpaqueEngineVulkanHandler.VulkanDevice);
+	std::vector<VkShaderModule> VulkanLoadedShaderModules;
+	std::vector<VkPipelineShaderStageCreateInfo> ShaderStagesCreateInfo = OEVulkan::GraphicsPipeline::CreateShaderStage(OpaqueEngineVulkanHandler.VulkanDevice, VulkanLoadedShaderModules);
 	
 	/* VERTEX INPUT */ 
 	VkPipelineVertexInputStateCreateInfo VertexInputCreateInfo = OEVulkan::GraphicsPipeline::CreateVertexInputState();
@@ -533,7 +571,7 @@ void OEVulkan::GraphicsPipeline::CreateGraphicsPipeline(OEVulkan::OEVulkanHandle
 	/* Graphics Pipeline */
 	VkGraphicsPipelineCreateInfo GraphicsPipelineCreateInfo{};
 	GraphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	GraphicsPipelineCreateInfo.stageCount = 2;
+	GraphicsPipelineCreateInfo.stageCount = static_cast<uint32_t>(ShaderStagesCreateInfo.size());
 	GraphicsPipelineCreateInfo.pStages = ShaderStagesCreateInfo.data();
 	GraphicsPipelineCreateInfo.pVertexInputState = &VertexInputCreateInfo;
 	GraphicsPipelineCreateInfo.pInputAssemblyState = &InputAssemblyCreateInfo;
@@ -541,27 +579,29 @@ void OEVulkan::GraphicsPipeline::CreateGraphicsPipeline(OEVulkan::OEVulkanHandle
 	GraphicsPipelineCreateInfo.pRasterizationState = &RasterizerCreateInfo;
 	GraphicsPipelineCreateInfo.pMultisampleState = &MultisamplingCreateInfo;
 	GraphicsPipelineCreateInfo.pDepthStencilState = nullptr; // We do not have a depth stencil
+	GraphicsPipelineCreateInfo.pTessellationState = nullptr; // We do not have a tesselation state
 	GraphicsPipelineCreateInfo.pColorBlendState = &ColorBlendStateCreateInfo;
 	GraphicsPipelineCreateInfo.pDynamicState = &DynamicStateCreateInfo;
 	GraphicsPipelineCreateInfo.layout = OpaqueEngineVulkanHandler.VulkanPipelineLayout;
 	GraphicsPipelineCreateInfo.renderPass = OpaqueEngineVulkanHandler.VulkanRenderPass;
 	GraphicsPipelineCreateInfo.subpass = 0;
-	GraphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
-	GraphicsPipelineCreateInfo.basePipelineIndex = -1; // Optional
 
 	if (vkCreateGraphicsPipelines(OpaqueEngineVulkanHandler.VulkanDevice, VK_NULL_HANDLE, 1, &GraphicsPipelineCreateInfo, nullptr, &OpaqueEngineVulkanHandler.VulkanGraphicsPipeline) != VK_SUCCESS)
 		throw std::runtime_error("Failed to create graphics pipeline!");
+
+	for (size_t i = 0; i < VulkanLoadedShaderModules.size(); i++)
+		vkDestroyShaderModule(OpaqueEngineVulkanHandler.VulkanDevice, VulkanLoadedShaderModules[i], nullptr);
 }
 
-std::vector<VkPipelineShaderStageCreateInfo> OEVulkan::GraphicsPipeline::CreateShaderStage(VkDevice _VulkanDevice)
+std::vector<VkPipelineShaderStageCreateInfo> OEVulkan::GraphicsPipeline::CreateShaderStage(VkDevice _VulkanDevice, std::vector<VkShaderModule>& VkShaderModules)
 {
 	std::vector<std::string> ShaderFilePaths = {
 		"E:\\Projects\\.vulkan\\Opaque\\Opaque\\Source\\Shaders\\Compiled\\DefaultShaderFragment.spv",  // Where they are located to me, persitent data paths is not a thing yet
 		"E:\\Projects\\.vulkan\\Opaque\\Opaque\\Source\\Shaders\\Compiled\\DefaultShaderVertex.spv",  // Where they are located to me, persitent data paths is not a thing yet
 	};
 
-	std::vector<char> VertexShaderCodeBuffer = OEVulkan::GraphicsPipeline::ShaderManager::ReadShaderFile(ShaderFilePaths[0]);
-	std::vector<char> FragmentShaderCodeBuffer = OEVulkan::GraphicsPipeline::ShaderManager::ReadShaderFile(ShaderFilePaths[1]);
+	std::vector<char> VertexShaderCodeBuffer = OEVulkan::GraphicsPipeline::ShaderManager::ReadShaderFile(ShaderFilePaths[1]);
+	std::vector<char> FragmentShaderCodeBuffer = OEVulkan::GraphicsPipeline::ShaderManager::ReadShaderFile(ShaderFilePaths[0]);
 
 	VkShaderModule VertexShaderModule = OEVulkan::GraphicsPipeline::ShaderManager::CreateShaderModule(VertexShaderCodeBuffer, _VulkanDevice);
 	VkShaderModule FragmentShaderModule = OEVulkan::GraphicsPipeline::ShaderManager::CreateShaderModule(FragmentShaderCodeBuffer, _VulkanDevice);
@@ -579,9 +619,6 @@ std::vector<VkPipelineShaderStageCreateInfo> OEVulkan::GraphicsPipeline::CreateS
 	FragmentShaderStageInfo.pName = "main";
 
 	std::vector<VkPipelineShaderStageCreateInfo> ShaderStagesCreateInfo = { VertexShaderStageInfo, FragmentShaderStageInfo };
-
-	vkDestroyShaderModule(_VulkanDevice, VertexShaderModule, nullptr);
-	vkDestroyShaderModule(_VulkanDevice, FragmentShaderModule, nullptr);
 
 	return ShaderStagesCreateInfo;
 }
