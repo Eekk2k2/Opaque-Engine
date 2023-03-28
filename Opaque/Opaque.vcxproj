@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Application\Vulkan\OEVulkan.cpp" />
     <ClCompile Include="Source\Shaders\ShaderManager.cpp" />
     <ClCompile Include="Source\Objects\Opaque\Object.cpp" />
     <ClCompile Include="Source\Objects\Opaque\Reactant.cpp" />
@@ -144,6 +145,7 @@
     <ClCompile Include="Source\Application\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Source\Application\Vulkan\OEVulkan.h" />
     <ClInclude Include="Source\Shaders\ShaderManager.h" />
     <ClInclude Include="Source\Components\Opaque\Base\Component.cpp" />
     <ClInclude Include="Source\Components\Opaque\Base\Component.h" />

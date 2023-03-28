@@ -8,6 +8,7 @@
 #include <set>
 #include <fstream>
 #include <string>
+#include <vector>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -17,6 +18,7 @@
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 
+#include "Vulkan/OEVulkan.h"
 #include "Debug/Debug.h"
 #include "..\Shaders\ShaderManager.h"
 
@@ -56,11 +58,6 @@ public:
 	GLFWcursor* ApplicationCursor;
 
 	/// <summary>
-	/// This is the debug client of thi application. 
-	/// </summary>
-	Debug debug = Debug();
-
-	/// <summary>
 	/// Function to get the whole thing going. Call this in main.cpp to start the program.
 	/// </summary>
 	void Run();
@@ -68,6 +65,13 @@ public:
 private:
 
 	// ------------------------------ Application ---
+
+	/// <summary>
+	/// The vulkan instance, id recommend looking through the code, as this is where most of the 
+	/// graphical stuff is done. Class only exists to make the main application smaller and less
+	/// intimidating.
+	/// </summary>
+	OEVulkan::OEVulkanHandler OpaqueEngineVulkanHandler;
 
 	/// <summary>
 	/// The vulkan instance of this application. Created in Application::CreateVulkanInstance();

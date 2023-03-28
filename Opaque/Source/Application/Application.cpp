@@ -114,14 +114,26 @@ void Application::SetCursor(const char* CursorImagePath, int xhot, int yhot)
 
 void Application::InitializeVulkan()
 {
-	CreateVulkanInstance();
-	// SetupDebugMessenger(); TODO
-	VulkanCreateSurface();
-	VulkanPickPhysicalDevice();
-	VulkanCreateLogicalDevice();
-	VulkanCreateSwapChain();
-	VulkanCreateImageViews();
-	VulkanCreateGraphicsPipeline();
+	OEVulkan::OEVulkanHandlerCreateInfo OpaqueEngineVulkanHandlerCreateInfo{};
+	OpaqueEngineVulkanHandlerCreateInfo.ApplicationWidth = this->ApplicationWidth;
+	OpaqueEngineVulkanHandlerCreateInfo.ApplicationHeight = this->ApplicationHeight;
+	OpaqueEngineVulkanHandlerCreateInfo.ApplicationName = this->ApplicationName;
+
+	OpaqueEngineVulkanHandlerCreateInfo.VulkanAPIVersion = VK_API_VERSION_1_3;
+
+	OpaqueEngineVulkanHandlerCreateInfo.pApplicationWindow = this->ApplicationWindow;
+
+	OEVulkan::OEVulkanHandler OpaqueEngineVulkanHandler = OEVulkan::OEVulkanHandler();
+	OEVulkan::General::InitializeVulkan(OpaqueEngineVulkanHandler, OpaqueEngineVulkanHandlerCreateInfo);
+
+	//CreateVulkanInstance();
+	 //SetupDebugMessenger(); TODO
+	//VulkanCreateSurface();
+	//VulkanPickPhysicalDevice();
+	//VulkanCreateLogicalDevice();
+	//VulkanCreateSwapChain();
+	//VulkanCreateImageViews();
+	//VulkanCreateGraphicsPipeline();
 }
 
 void Application::InitializeWindow()
@@ -340,7 +352,7 @@ void Application::VulkanCreateImageViews()
 
 void Application::VulkanCreateGraphicsPipeline()
 {
-	// SHADER STAGE
+	/* SHADER STAGE */
 
 	std::vector<std::string> ShaderFilePaths = {
 		"E:\\Projects\\.vulkan\\Opaque\\Opaque\\Source\\Shaders\\Compiled\\DefaultShaderFragment.spv",  // Where they are located to me, persitent data paths is not a thing yet
@@ -367,7 +379,7 @@ void Application::VulkanCreateGraphicsPipeline()
 
 	VkPipelineShaderStageCreateInfo ShaderStagesCreateInfo[] = { VertexShaderStageInfo, FragmentShaderStageInfo };
 
-	// VERTEX INPUT
+	/* VERTEX INPUT */
 
 	VkPipelineVertexInputStateCreateInfo VertexInputCreateInfo{};
 	VertexInputCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
@@ -376,14 +388,14 @@ void Application::VulkanCreateGraphicsPipeline()
 	VertexInputCreateInfo.vertexAttributeDescriptionCount = 0;
 	VertexInputCreateInfo.pVertexAttributeDescriptions = nullptr;
 
-	// INPUT ASSEMBLY
+	/* INPUT ASSEMBLY */
 
 	VkPipelineInputAssemblyStateCreateInfo InputAssemblyCreateInfo{};
 	InputAssemblyCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 	InputAssemblyCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	InputAssemblyCreateInfo.primitiveRestartEnable = VK_FALSE;
 
-	// VIEWPORT AND SCISSORS
+	/* VIEWPORT AND SCISSORS */
 
 	VkViewport VulkanViewport{};
 	VulkanViewport.x = 0.0f;
@@ -406,6 +418,56 @@ void Application::VulkanCreateGraphicsPipeline()
 	DynamicStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	DynamicStateCreateInfo.dynamicStateCount = static_cast<uint32_t>(DynamicStates.size());
 	DynamicStateCreateInfo.pDynamicStates = DynamicStates.data();
+
+	VkPipelineViewportStateCreateInfo ViewportStateCreateInfo{};
+	ViewportStateCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+
+	ViewportStateCreateInfo.viewportCount = 1;
+	ViewportStateCreateInfo.pViewports = &VulkanViewport;
+
+	ViewportStateCreateInfo.scissorCount = 1;
+	ViewportStateCreateInfo.pScissors = &VulkanScissor;
+
+	/* Rasterizer */ 
+
+	VkPipelineRasterizationStateCreateInfo RasterizerCreateInfo{};
+	RasterizerCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+	RasterizerCreateInfo.depthClampEnable = VK_FALSE;
+	RasterizerCreateInfo.rasterizerDiscardEnable = VK_FALSE;
+	RasterizerCreateInfo.rasterizerDiscardEnable = VK_FALSE;
+	RasterizerCreateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+	//RasterizerCreateInfo.lineWidth = 1.0f;
+	RasterizerCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;;
+	RasterizerCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+	RasterizerCreateInfo.depthBiasEnable = VK_FALSE;
+
+	/* Multisampling */
+
+	VkPipelineMultisampleStateCreateInfo MultisamplingCreateInfo{};
+	MultisamplingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+	MultisamplingCreateInfo.sampleShadingEnable = VK_FALSE;
+	MultisamplingCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+	MultisamplingCreateInfo.minSampleShading = 1.0f; // Optional
+	MultisamplingCreateInfo.pSampleMask = nullptr; // Optional
+	MultisamplingCreateInfo.alphaToCoverageEnable = VK_FALSE; // Optional
+	MultisamplingCreateInfo.alphaToOneEnable = VK_FALSE; // Optional
+	
+	/* Depth and stencil testing */
+	
+	// No codes exists due to there not being any stencil and depth buffers.
+
+	/* Color blending */
+
+	VkPipelineColorBlendAttachmentState ColorBlendAttachmentState{};
+	ColorBlendAttachmentState.colorWriteMask =	VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	ColorBlendAttachmentState.blendEnable = VK_TRUE;
+	ColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	ColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	ColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
+	ColorBlendAttachmentState.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	ColorBlendAttachmentState.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	ColorBlendAttachmentState.alphaBlendOp = VK_BLEND_OP_ADD;
+
 
 	vkDestroyShaderModule(VulkanDevice, VertexShaderModule, nullptr);
 	vkDestroyShaderModule(VulkanDevice, FragmentShaderModule , nullptr);
